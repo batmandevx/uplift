@@ -19,6 +19,7 @@ import { RecoveryTrendCard } from "@/components/dashboard/recovery-trend-card";
 import { AuditTimeline } from "@/components/dashboard/audit-timeline";
 import { MethodologyCard } from "@/components/dashboard/methodology-card";
 import { ComplianceGateBanner } from "@/components/dashboard/compliance-gate-banner";
+import { CommandPalette } from "@/components/dashboard/command-palette";
 import { useKeyboardShortcuts } from "@/components/dashboard/use-keyboard-shortcuts";
 import { useOverview } from "@/components/dashboard/queries";
 
@@ -172,6 +173,9 @@ export default function Home() {
           <AuditTimeline />
         </section>
       </main>
+
+      {/* Command palette (Cmd+K / Ctrl+K) */}
+      <CommandPalette />
 
       <SiteFooter />
     </div>

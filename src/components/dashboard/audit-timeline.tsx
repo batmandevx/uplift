@@ -10,6 +10,7 @@ import {
   XCircle,
   Cpu,
   User,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -21,9 +22,11 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { QueryError } from "./query-error";
 import { useAudit } from "./queries";
 import { formatDateTime } from "@/lib/format";
+import { toast } from "sonner";
 import type { AuditEvent, AuditTimelineGroup } from "@/lib/dashboard-types";
 
 const ACTION_META: Record<
@@ -118,10 +121,47 @@ export function AuditTimeline() {
             <CardTitle>Audit Timeline</CardTitle>
           </div>
           {data && data.length > 0 && (
-            <Badge variant="outline" className="gap-1 text-[10px]">
-              <Lock className="size-3" aria-hidden />
-              sealed
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1.5 px-2 text-[11px]"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/audit/export?limit=500");
+                    if (!res.ok) throw new Error("Export failed");
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download =
+                      res.headers
+                        .get("Content-Disposition")
+                        ?.match(/filename="([^"]+)"/)?.[1] ??
+                      "audit-export.csv";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    toast.success("Audit CSV exported", {
+                      description: `${data.length} events downloaded.`,
+                    });
+                  } catch (e) {
+                    toast.error("Export failed", {
+                      description: (e as Error).message,
+                    });
+                  }
+                }}
+                aria-label="Export audit timeline as CSV"
+              >
+                <Download className="size-3" aria-hidden />
+                <span className="hidden sm:inline">CSV</span>
+              </Button>
+              <Badge variant="outline" className="gap-1 text-[10px]">
+                <Lock className="size-3" aria-hidden />
+                sealed
+              </Badge>
+            </div>
           )}
         </div>
         <CardDescription>

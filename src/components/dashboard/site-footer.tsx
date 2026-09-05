@@ -26,6 +26,8 @@ export function SiteFooter() {
               <span className="opacity-60">theme</span>
               <kbd className="ml-1 rounded border bg-muted/60 px-1 py-px font-mono text-[9px]">B</kbd>
               <span className="opacity-60">batch</span>
+              <kbd className="ml-1 rounded border bg-muted/60 px-1 py-px font-mono text-[9px]">⌘K</kbd>
+              <span className="opacity-60">commands</span>
               <kbd className="ml-1 rounded border bg-muted/60 px-1 py-px font-mono text-[9px]">?</kbd>
               <span className="opacity-60">help</span>
             </span>

@@ -462,3 +462,52 @@ Unresolved issues / risks / next-phase priorities:
 - Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
 - Consider a command palette (Cmd+K) for power-user navigation across all dashboard sections.
 - Consider a CSV export of the audit timeline for compliance reporting.
+
+---
+Task ID: 9 (webDevReview round 9)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0-8). Project had 21 API routes, 4 keyboard shortcuts (S/T/B/?), compliance score with 24h sparkline, methodology tamper-simulation, batch scatter with quadrant labels, etc.
+- QA: Re-seeded for clean data. Fresh browser session: zero console errors/warnings. All existing features render. Lint clean. dev.log clean. No bugs to fix.
+
+- Added 2 new features + 1 new API route + 1 new component:
+
+  1. CSV export of audit timeline (compliance reporting):
+     - New endpoint GET /api/audit/export?limit=500 — returns a CSV file with columns: timestamp_ist, batch_name, actor, action, detail. Properly escapes double-quotes (RFC 4180), computes IST timestamps (UTC+5:30), sets Content-Type text/csv + Content-Disposition attachment with a timestamped filename (audit-export-YYYY-MM-DD-HH-MM-SS.csv). Up to 2000 events.
+     - Verified via curl: returns valid CSV with header row + 3 rows, detail field properly escaped (e.g. ""ab phone mat karna"").
+     - Added a "CSV" export button (Download icon) to the AuditTimeline card header, next to the "sealed" badge. On click: fetches the CSV, creates a Blob, triggers a download via a temporary anchor element, and shows a sonner toast on success/failure.
+     - Verified via agent-browser: "Export audit timeline as CSV" button renders in the audit timeline header.
+
+  2. Command palette (Cmd+K / Ctrl+K):
+     - New component CommandPalette (command-palette.tsx): uses shadcn CommandDialog + cmdk. Opens on Cmd+K / Ctrl+K (toggles on repeat). Two groups:
+       - Navigate: Methodology Pre-registration (Pillar 1), Stop-Rule Simulator (Pillar 3), Escalation Ladder (Pillar 2), Batch Comparison, Audit Timeline, Debtor Registry — each scrolls the target section into view with a smooth scroll + a brief ring flash highlight, shows a "Jumped to X" toast.
+       - Actions: Switch to dark/light theme, Focus Stop-Rule Simulator, Export Audit Timeline (CSV) (reuses the same fetch+download logic), Show keyboard shortcuts.
+     - Fuzzy search via cmdk's value matching (label + keywords + hint).
+     - Wired into page.tsx as <CommandPalette /> before the footer.
+     - Updated footer kbd hints to include "⌘K commands".
+     - Verified interactively via agent-browser: Cmd+K opens the palette (dialog "Command Palette" with Navigate + Actions groups), selecting "Audit Timeline" closes the palette, shows "Jumped to Audit Timeline" toast, and scrolls the audit section to top (boundingRect.top = 0).
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200. No error markers.
+- Console: fresh browser session → zero errors/warnings.
+- API: /api/audit/export returns valid CSV with proper escaping + IST timestamps.
+- agent-browser: CSV export button renders in audit timeline; Cmd+K opens command palette with 6 navigate + 4 action items; selecting an item navigates + toasts.
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-10 features complete: CSV export of audit timeline (new API + button in audit timeline), command palette Cmd+K (6 navigate shortcuts + 4 actions, fuzzy search, smooth scroll + ring flash + toast).
+- 1 new API route added (total now 22). 1 new component (command-palette). 1 existing component extended (audit-timeline with CSV button + footer kbd hint update).
+- Lint clean. All features verified. Page renders 200 with zero console errors.
+- The dashboard now has a power-user command palette (Cmd+K) for fast navigation across all sections + quick actions, and the audit timeline can be exported as a CSV for compliance reporting.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue.
+- NextAuth RBAC: write actions still stamp "operator@console". Next phase: add NextAuth with agent roles + real approver identity.
+- Socket.io live push: all feeds still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time stop-events / gate decisions / audit timeline updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio → pipe through detectStopPhrase + LLM classify for real-time stop detection.
+- Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
+- Consider adding debtor-level CSV export (per-debtor attempts + opt-outs + audit) from the drawer.
+- Consider a dark-mode-first toggle in the command palette for the theme action icon.
