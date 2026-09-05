@@ -25,6 +25,7 @@ import type {
   MethodologyResponse,
   RecordAttemptResponse,
   ManualOptOutResponse,
+  ComplianceGatesResponse,
 } from "@/lib/dashboard-types";
 
 async function jfetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -329,5 +330,19 @@ export function useManualOptOut() {
       qc.invalidateQueries({ queryKey: ["overview"] });
       qc.invalidateQueries({ queryKey: ["audit"] });
     },
+  });
+}
+
+// ---- Phase-5: compliance-gate banner, batch scatter ----
+
+export function useComplianceGates(batchId?: string) {
+  return useQuery<ComplianceGatesResponse>({
+    queryKey: ["compliance-gates", batchId],
+    enabled: !!batchId,
+    queryFn: () =>
+      jfetch<ComplianceGatesResponse>(
+        `/api/compliance-gates?batchId=${encodeURIComponent(batchId!)}`,
+      ),
+    refetchInterval: 60_000,
   });
 }

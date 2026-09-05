@@ -226,3 +226,55 @@ Unresolved issues / risks / next-phase priorities:
 - Batch comparison: add a delta/lift scatter plot (incremental rupees vs lift %, bubble size = debtor count).
 - Methodology: add a "verify hash" action that recomputes the hash client-side and confirms it matches the stored one (tamper-evidence demo).
 - Consider a compliance-gate summary indicator showing which gates are currently blocking (quiet-hours active, etc.).
+
+---
+Task ID: 4 (webDevReview round 4)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0-3). Project had 19 API routes, 3 batches, methodology pre-registration, debtor drawer write actions, batch-comparison chart, recovery-trend sparkline, audit timeline, LLM fuzzy classify, quiet-hours clock, seal batch action.
+- QA: Re-seeded for clean data. Started dev server (unstable in sandbox — confirmed). Fresh browser session: zero console errors/warnings. All existing features render. Lint clean. dev.log clean. No bugs to fix.
+
+- Added 3 new features + 1 new API route + 3 new components:
+
+  1. Client-side methodology hash verification (tamper-evidence demo):
+     - New lib `src/lib/methodology-hash.ts` — `computeMethodologyHash()` (FNV-1a 32-bit, mirrors the seed's implementation) + `verifyMethodologyHash()` helper. Takes batch name, mandate, holdout ratio, analysis plan → returns 8-char uppercase hex.
+     - Rewrote MethodologyCard (methodology-card.tsx): added "Verify hash" button that recomputes the hash client-side (with a brief 600ms spinner for UX), compares to the stored value, and shows an animated "Verified — plan intact" (emerald) or "Mismatch — possible tampering" (rose) status. Shows the recomputed hash in a collapsible panel. Added a copy-to-clipboard button for the hash. Uses sonner toasts for success/error feedback.
+     - Verified via agent-browser: clicked "Verify hash" → "Verified — plan intact" + recomputed hash displayed. The tamper-evidence demo works end-to-end.
+
+  2. Compliance-gate status banner:
+     - New endpoint GET /api/compliance-gates?batchId= — returns the live state of 6 compliance gates: (1) quiet-hours (blocking/passing, with countdown), (2) opt-out registry (active count), (3) human-approval gate (pending count), (4) daily attempt cap (debtors at cap), (5) total attempt cap (debtors at cap), (6) batch lifecycle (RUNNING vs not). Each gate has key/label/state/detail/icon. Plus a summary {blocking, pending, active, passing}.
+     - New component ComplianceGateBanner (compliance-gate-banner.tsx): a horizontal banner with an overall status icon ("All compliance gates passing" / "Outreach partially blocked"), IST clock, summary counts, and a row of gate chips (each with icon, label, colored dot, hover tooltip with detail). Color-coded by state (emerald=passing, rose=blocking, amber=pending, muted=active). Polls every 60s. Wired below the pillar banners at the top of the main content.
+     - Verified via curl + agent-browser: at 23:48 IST, banner shows "Outreach partially blocked" with quiet-hours blocking (8h 12m remaining), opt-out-registry active (7 debtors), human-approval pending (8 escalations).
+
+  3. Batch-comparison scatter plot:
+     - New component BatchScatterPlot (batch-scatter-plot.tsx): recharts ScatterChart plotting incremental recovery (₹, X-axis) vs lift % (Y-axis), bubble size = debtor count (ZAxis range 60-400). Running batch highlighted with a foreground stroke + higher opacity; sealed batches use chart-1 color. Custom tooltip shows full breakdown (incremental, lift, debtor count, mandate). Short batch-name labels positioned above each bubble. Wired next to the BatchComparisonChart in a 2-col grid; AuditTimeline moved to full-width below.
+     - Uses existing /api/batch-comparison data (no new API needed).
+
+- Extended dashboard-types.ts with GateState, ComplianceGate, ComplianceGatesResponse. Extended queries.ts with useComplianceGates (refetchInterval 60s).
+
+- Layout change: the batch-comparison section is now a 2-col grid (BatchComparisonChart bar chart + BatchScatterPlot scatter), and the AuditTimeline is now full-width below it (better use of horizontal space for the timeline's date grouping).
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200. New features present: "Incremental vs Lift" (scatter), "Outreach partially blocked" (banner), "Verify hash" (methodology). No error markers.
+- Console: fresh browser session → zero errors/warnings.
+- API: /api/compliance-gates returns 6 gates with live states (quiet-hours blocking at 23:48 IST, 7 opted-out, 8 pending gates).
+- agent-browser: confirmed "Outreach partially blocked" banner, "Verify hash" button → click → "Verified — plan intact" + recomputed hash, "Incremental vs Lift" scatter plot all render. All interactive.
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-5 features complete: client-side methodology hash verification (tamper-evidence demo with verify button + animated status), compliance-gate status banner (6 live gates, overall status, IST clock, per-gate chips with tooltips, polls every 60s), batch-comparison scatter plot (incremental vs lift, bubble=debtor count, running batch highlighted).
+- 1 new API route added (total now 20). 3 new dashboard components added (methodology-hash lib, compliance-gate-banner, batch-scatter-plot). MethodologyCard rewritten with verify + copy.
+- Lint clean. All endpoints verified. Page renders 200 with zero console errors.
+- The tamper-evidence demo is now live: operators can recompute the methodology hash client-side and confirm it matches the pre-registered value, proving the analysis plan was not mutated after lock.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue.
+- NextAuth RBAC: write actions still stamp "operator@console". Next phase: add NextAuth with agent roles + real approver identity.
+- Socket.io live push: all feeds still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time stop-events / gate decisions / audit timeline updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio → pipe through detectStopPhrase + LLM classify for real-time stop detection.
+- Consider adding a methodology "tamper simulation" toggle that deliberately mutates the plan text client-side to demonstrate the hash mismatch path.
+- Consider a compliance-gate history sparkline showing when gates flipped state over the last 24h.
+- Batch scatter: add quadrant labels (top-right = "high lift + high volume = best", bottom-left = "low impact").

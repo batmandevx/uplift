@@ -14,9 +14,11 @@ import { StopRuleSimulator } from "@/components/dashboard/stop-rule-simulator";
 import { StopEventsFeed } from "@/components/dashboard/stop-events-feed";
 import { DebtorDrilldown } from "@/components/dashboard/debtor-drilldown";
 import { BatchComparisonChart } from "@/components/dashboard/batch-comparison-chart";
+import { BatchScatterPlot } from "@/components/dashboard/batch-scatter-plot";
 import { RecoveryTrendCard } from "@/components/dashboard/recovery-trend-card";
 import { AuditTimeline } from "@/components/dashboard/audit-timeline";
 import { MethodologyCard } from "@/components/dashboard/methodology-card";
+import { ComplianceGateBanner } from "@/components/dashboard/compliance-gate-banner";
 import { useOverview } from "@/components/dashboard/queries";
 
 export default function Home() {
@@ -79,6 +81,11 @@ export default function Home() {
             description="Live Hinglish stop-phrase detection · Opt-out written · Outreach halted instantly."
             tone="rose"
           />
+        </div>
+
+        {/* Live compliance-gate status banner */}
+        <div className="mb-6">
+          <ComplianceGateBanner batchId={batchId} />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
@@ -151,6 +158,14 @@ export default function Home() {
           className="mt-4 grid grid-cols-1 gap-4 lg:mt-6 lg:grid-cols-2 lg:gap-6"
         >
           <BatchComparisonChart />
+          <BatchScatterPlot />
+        </section>
+
+        {/* Full-width: audit timeline */}
+        <section
+          aria-label="Audit timeline"
+          className="mt-4 lg:mt-6"
+        >
           <AuditTimeline />
         </section>
       </main>

@@ -316,3 +316,26 @@ export interface ManualOptOutResponse {
     optOutReason: string | null;
   };
 }
+
+// ---- Phase-5 additions (compliance-gate banner, batch scatter) ----
+
+export type GateState = "passing" | "blocking" | "pending" | "active";
+
+export interface ComplianceGate {
+  key: string;
+  label: string;
+  state: GateState;
+  detail: string;
+  icon: string;
+}
+
+export interface ComplianceGatesResponse {
+  nowIst: string;
+  gates: ComplianceGate[];
+  summary: {
+    blocking: number;
+    pending: number;
+    active: number;
+    passing: number;
+  };
+}
