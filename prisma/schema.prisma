@@ -1,0 +1,156 @@
+// Compliant Debt-Recovery Batch Orchestration Platform
+// Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A batch of debtors processed together for recovery.
+// Pre-registered with a fixed holdout ratio so incremental recovery
+// vs. holdout is measured against a sealed, immutable plan.
+model RecoveryBatch {
+  id            String   @id @default(cuid())
+  name          String
+  region        String   @default("IN")
+  mandateLevel  String   @default("SOFT") // SOFT | STANDARD | ENHANCED
+  holdoutRatio  Float    @default(0.2) // pre-registered fraction held out
+  status        String   @default("DRAFT") // DRAFT | RUNNING | CLOSED | SEALED
+  startedAt     DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  debtors       Debtor[]
+  attempts      RecoveryAttempt[]
+  gates         EscalationGate[]
+  stopEvents    StopRuleEvent[]
+  auditEvents   AuditEvent[]
+
+  @@index([status])
+}
+
+// A debtor record. PII is masked; only a token is shown in the UI.
+model Debtor {
+  id                String   @id @default(cuid())
+  batchId           String
+  batch             RecoveryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  token             String   @unique // masked identifier e.g. DBT-7F3A
+  region            String   @default("IN")
+  preferredLanguage String   @default("en") // en | hi | hinglish
+  outstandingAmount Float    @default(0)
+  recoveredAmount   Float    @default(0)
+  // experiment assignment (pre-registered, immutable once batch RUNNING)
+  isHoldout         Boolean  @default(false)
+  // compliance state
+  optOut            Boolean  @default(false)
+  optOutReason      String?
+  stoppedReason     String?
+  currentLevel      Int      @default(0) // escalation ladder rung
+  attemptCountToday Int      @default(0)
+  attemptCountTotal Int      @default(0)
+  lastAttemptAt     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  attempts          RecoveryAttempt[]
+  optOutRecords     OptOutRecord[]
+  gates             EscalationGate[]
+  stopEvents        StopRuleEvent[]
+  auditEvents       AuditEvent[]
+
+  @@index([batchId])
+  @@index([isHoldout])
+  @@index([optOut])
+}
+
+// An outreach attempt against a debtor.
+model RecoveryAttempt {
+  id              String   @id @default(cuid())
+  batchId         String
+  batch           RecoveryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  debtorId        String
+  debtor          Debtor     @relation(fields: [debtorId], references: [id], onDelete: Cascade)
+  channel         String   @default("VOICE") // VOICE | SMS | WHATSAPP | EMAIL
+  escalationLevel Int      @default(0)
+  outcome         String   @default("PENDING") // PENDING | CONTACTED | PROMISE_TO_PAY | PAID | NO_ANSWER | REFUSED | STOP_REQUESTED
+  amountCollected Float    @default(0)
+  transcriptSnippet String?
+  attemptedAt     DateTime @default(now())
+
+  @@index([batchId])
+  @@index([debtorId])
+  @@index([outcome])
+}
+
+// Opt-out registry. Append-only, immutable record of opt-out signals.
+model OptOutRecord {
+  id           String   @id @default(cuid())
+  debtorId     String
+  debtor       Debtor   @relation(fields: [debtorId], references: [id], onDelete: Cascade)
+  source       String   @default("VOICE") // VOICE | SMS | AGENT | AUTO
+  reason       String
+  rawPhrase    String?  // e.g. "stop calling me" / "mujhe call mat karo"
+  language     String   @default("en")
+  detectedAt   DateTime @default(now())
+
+  @@index([debtorId])
+}
+
+// Human approval gate for escalations (mandate-gated ladder).
+model EscalationGate {
+  id           String   @id @default(cuid())
+  batchId      String
+  batch        RecoveryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  debtorId     String
+  debtor       Debtor   @relation(fields: [debtorId], references: [id], onDelete: Cascade)
+  fromLevel    Int
+  toLevel      Int
+  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED | AUTO_APPROVED
+  approver     String?
+  rationale    String?
+  requestedAt  DateTime @default(now())
+  decidedAt    DateTime?
+
+  @@index([batchId])
+  @@index([debtorId])
+  @@index([status])
+}
+
+// Stop-rule trigger events. Used to demo "stop calling me" (incl. Hinglish).
+model StopRuleEvent {
+  id              String   @id @default(cuid())
+  batchId         String
+  batch           RecoveryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  debtorId        String
+  debtor          Debtor   @relation(fields: [debtorId], references: [id], onDelete: Cascade)
+  rawPhrase       String
+  detectedLanguage String  @default("en") // en | hi | hinglish
+  matchedRule     String   // e.g. STOP_EN | STOP_HI | STOP_HINGLISH
+  actionTaken     String   @default("HALT_OUTREACH") // HALT_OUTREACH | ADD_TO_OPTOUT | NOTIFY_AGENT
+  confidence      Float    @default(1.0)
+  at              DateTime @default(now())
+
+  @@index([batchId])
+  @@index([debtorId])
+}
+
+// Append-only audit log for compliance evidence.
+model AuditEvent {
+  id          String   @id @default(cuid())
+  batchId     String?
+  batch       RecoveryBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  debtorId    String?
+  debtor      Debtor?  @relation(fields: [debtorId], references: [id], onDelete: SetNull)
+  actor       String   @default("system")
+  action      String
+  detail      String?
+  at          DateTime @default(now())
+
+  @@index([batchId])
+  @@index([debtorId])
+}
