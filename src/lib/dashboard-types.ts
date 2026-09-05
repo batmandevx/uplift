@@ -129,3 +129,99 @@ export interface AuditEvent {
   action: string;
   detail?: string;
 }
+
+// ---- Phase-2 additions (LLM classify, debtor drill-down, seal, quiet hours) ----
+
+export interface LLMClassifyRequest {
+  phrase: string;
+}
+
+export interface LLMClassifyResponse {
+  ok: boolean;
+  isStopRequest: boolean;
+  language: DetectedLanguage;
+  confidence: number; // 0..1
+  intent: string; // short label e.g. "stop outreach" | "request callback" | "payment query"
+  reasoning: string;
+  rule: string; // STOP_EN | STOP_HI | STOP_HINGLISH | LLM_FUZZY | NONE
+}
+
+export interface DebtorListItem {
+  id: string;
+  token: string;
+  region: string;
+  preferredLanguage: string;
+  outstandingAmount: number;
+  recoveredAmount: number;
+  isHoldout: boolean;
+  optOut: boolean;
+  currentLevel: number;
+  attemptCountTotal: number;
+  lastAttemptAt?: string | null;
+}
+
+export interface DebtorAttempt {
+  id: string;
+  channel: string;
+  escalationLevel: number;
+  outcome: string;
+  amountCollected: number;
+  transcriptSnippet?: string | null;
+  attemptedAt: string;
+}
+
+export interface DebtorOptOut {
+  id: string;
+  source: string;
+  reason: string;
+  rawPhrase?: string | null;
+  language: string;
+  detectedAt: string;
+}
+
+export interface DebtorDetail {
+  id: string;
+  token: string;
+  region: string;
+  preferredLanguage: string;
+  outstandingAmount: number;
+  recoveredAmount: number;
+  isHoldout: boolean;
+  optOut: boolean;
+  optOutReason?: string | null;
+  stoppedReason?: string | null;
+  currentLevel: number;
+  attemptCountToday: number;
+  attemptCountTotal: number;
+  lastAttemptAt?: string | null;
+  batchId: string;
+  batchName: string;
+  recoveryPct: number;
+  attempts: DebtorAttempt[];
+  optOuts: DebtorOptOut[];
+  audit: AuditEvent[];
+}
+
+export interface QuietHoursStatus {
+  nowIst: string; // HH:mm
+  insideQuietHours: boolean;
+  windowStart: string;
+  windowEnd: string;
+  nextChangeInMinutes: number;
+  outreachSuppressed: boolean;
+}
+
+export interface SealBatchResponse {
+  ok: boolean;
+  batch: {
+    id: string;
+    name: string;
+    status: string;
+    closedAt: string;
+  };
+  groundTruth: {
+    treatedN: number;
+    holdoutN: number;
+    incrementalRupees: number;
+  };
+}

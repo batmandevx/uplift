@@ -16,6 +16,11 @@ import type {
   HoldoutComparison,
   RecoveryBucket,
   AuditEvent,
+  LLMClassifyResponse,
+  DebtorListItem,
+  DebtorDetail,
+  QuietHoursStatus,
+  SealBatchResponse,
 } from "@/lib/dashboard-types";
 
 async function jfetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -157,6 +162,67 @@ export function useSubmitStopRule() {
       qc.invalidateQueries({ queryKey: ["stop-events"] });
       qc.invalidateQueries({ queryKey: ["compliance-rules"] });
       qc.invalidateQueries({ queryKey: ["overview"] });
+      qc.invalidateQueries({ queryKey: ["audit"] });
+      qc.invalidateQueries({ queryKey: ["debtors"] });
+    },
+  });
+}
+
+// ---- Phase-2: LLM classify, debtor drill-down, quiet hours, seal batch ----
+
+export function useLLMClassify() {
+  return useMutation({
+    mutationFn: (args: { phrase: string }) =>
+      jfetch<LLMClassifyResponse>(`/api/stop-rule/classify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(args),
+      }),
+  });
+}
+
+export function useDebtors(
+  batchId?: string,
+  opts?: { q?: string; status?: string; limit?: number },
+) {
+  return useQuery<DebtorListItem[]>({
+    queryKey: ["debtors", batchId, opts?.q ?? "", opts?.status ?? "all", opts?.limit ?? 100],
+    enabled: !!batchId,
+    queryFn: () => {
+      const p = new URLSearchParams();
+      p.set("batchId", batchId!);
+      if (opts?.q) p.set("q", opts.q);
+      if (opts?.status) p.set("status", opts.status);
+      if (opts?.limit) p.set("limit", String(opts.limit));
+      return jfetch<DebtorListItem[]>(`/api/debtors?${p.toString()}`);
+    },
+  });
+}
+
+export function useDebtorDetail(token?: string) {
+  return useQuery<DebtorDetail>({
+    queryKey: ["debtor", token],
+    enabled: !!token,
+    queryFn: () => jfetch<DebtorDetail>(`/api/debtors/${encodeURIComponent(token!)}`),
+  });
+}
+
+export function useQuietHours() {
+  return useQuery<QuietHoursStatus>({
+    queryKey: ["quiet-hours"],
+    queryFn: () => jfetch<QuietHoursStatus>(`/api/quiet-hours`),
+    refetchInterval: 60_000, // refresh every minute
+  });
+}
+
+export function useSealBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      jfetch<SealBatchResponse>(`/api/batches/${id}/seal`, { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["overview"] });
+      qc.invalidateQueries({ queryKey: ["batches"] });
       qc.invalidateQueries({ queryKey: ["audit"] });
     },
   });

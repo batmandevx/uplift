@@ -140,3 +140,34 @@
     background-color: var(--muted-foreground);
   }
 }
+
+/* Subtle dotted-grid page backdrop for the dashboard shell. */
+@utility bg-grid {
+  background-image:
+    radial-gradient(
+      circle at 1px 1px,
+      color-mix(in oklch, var(--foreground) 8%, transparent) 1px,
+      transparent 0
+    );
+  background-size: 22px 22px;
+}
+
+/* Soft ambient glow used behind the pillar banners. */
+@utility bg-aurora {
+  background:
+    radial-gradient(
+      60% 50% at 12% 0%,
+      color-mix(in oklch, var(--chart-1) 16%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      50% 45% at 88% 8%,
+      color-mix(in oklch, var(--chart-4) 14%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      45% 40% at 50% 100%,
+      color-mix(in oklch, var(--chart-2) 10%, transparent) 0%,
+      transparent 60%
+    );
+}

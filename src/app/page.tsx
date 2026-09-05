@@ -12,6 +12,7 @@ import { EscalationGateQueue } from "@/components/dashboard/escalation-gate-queu
 import { ComplianceRulesPanel } from "@/components/dashboard/compliance-rules-panel";
 import { StopRuleSimulator } from "@/components/dashboard/stop-rule-simulator";
 import { StopEventsFeed } from "@/components/dashboard/stop-events-feed";
+import { DebtorDrilldown } from "@/components/dashboard/debtor-drilldown";
 import { useOverview } from "@/components/dashboard/queries";
 
 export default function Home() {
@@ -34,7 +35,16 @@ export default function Home() {
   const activeBatch = overview.data?.batch;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="relative flex min-h-screen flex-col bg-background">
+      {/* Ambient backdrop: dotted grid + soft aurora glow */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 bg-grid opacity-60"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[420px] bg-aurora"
+        aria-hidden
+      />
       <SiteHeader
         batch={activeBatch}
         batchId={batchId}
@@ -118,6 +128,14 @@ export default function Home() {
             <ComplianceRulesPanel batchId={batchId} />
           </aside>
         </div>
+
+        {/* Full-width cross-cutting: per-debtor drill-down */}
+        <section
+          aria-label="Debtor registry and drill-down"
+          className="mt-4 lg:mt-6"
+        >
+          <DebtorDrilldown batchId={batchId} />
+        </section>
       </main>
 
       <SiteFooter />
@@ -142,13 +160,25 @@ function PillarBanner({
       : tone === "amber"
         ? "border-amber-300/40 bg-amber-50/50 dark:bg-amber-950/20"
         : "border-rose-300/40 bg-rose-50/50 dark:bg-rose-950/20";
+  const dot =
+    tone === "emerald"
+      ? "bg-emerald-500"
+      : tone === "amber"
+        ? "bg-amber-500"
+        : "bg-rose-500";
   return (
-    <div className={`rounded-xl border p-4 ${ring}`}>
+    <div
+      className={`group rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${ring}`}
+    >
       <div className="flex items-center gap-2">
         <span className="grid size-6 place-items-center rounded-md bg-background text-xs font-semibold text-foreground shadow-sm">
           {index}
         </span>
         <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        <span
+          className={`ml-auto size-1.5 rounded-full ${dot} opacity-60 transition-opacity group-hover:opacity-100`}
+          aria-hidden
+        />
       </div>
       <p className="mt-1.5 text-xs text-muted-foreground">{description}</p>
     </div>

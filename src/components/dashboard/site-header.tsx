@@ -1,9 +1,19 @@
 "use client";
 
-import { ShieldCheck, MapPin } from "lucide-react";
+import { ShieldCheck, MapPin, Lock } from "lucide-react";
 import { BatchSelector } from "./batch-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { QuietHoursClock } from "./quiet-hours-clock";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useSealBatch } from "./queries";
+import { toast } from "sonner";
 import type { Batch } from "@/lib/dashboard-types";
 
 export function SiteHeader({
@@ -15,6 +25,24 @@ export function SiteHeader({
   batchId?: string;
   onBatchChange: (id: string) => void;
 }) {
+  const seal = useSealBatch();
+
+  const canSeal = batch?.status === "RUNNING" && !!batchId;
+
+  function onSeal() {
+    if (!batchId) return;
+    seal.mutate(batchId, {
+      onSuccess: (res) =>
+        toast.success("Batch sealed", {
+          description: `${res.batch.name} locked. Ground truth: ₹${res.groundTruth.incrementalRupees.toLocaleString(
+            "en-IN",
+          )} incremental recovery across ${res.groundTruth.treatedN} treated.`,
+        }),
+      onError: (e: Error) =>
+        toast.error("Seal failed", { description: e.message }),
+    });
+  }
+
   return (
     <header
       className="sticky top-0 z-40 w-full border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70"
@@ -41,7 +69,30 @@ export function SiteHeader({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <QuietHoursClock />
+          {canSeal && (
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onSeal}
+                    disabled={seal.isPending}
+                    className="h-8 gap-1.5 border-amber-300/50 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/60"
+                    aria-label="Seal batch — lock ground truth"
+                  >
+                    <Lock className="size-3.5" aria-hidden />
+                    <span className="hidden sm:inline">Seal batch</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Lock ground truth. Running → Sealed.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <BatchSelector value={batchId} onChange={onBatchChange} />
           <ThemeToggle />
         </div>

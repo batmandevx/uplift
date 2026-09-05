@@ -9,6 +9,9 @@ import {
   ShieldAlert,
   CheckCircle2,
   ChevronDown,
+  Sparkles,
+  Brain,
+  XCircle,
 } from "lucide-react";
 import {
   Card,
@@ -28,9 +31,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSubmitStopRule } from "./queries";
+import { useSubmitStopRule, useLLMClassify } from "./queries";
 import { toast } from "sonner";
-import type { DetectedLanguage, StopRuleResponse } from "@/lib/dashboard-types";
+import type {
+  DetectedLanguage,
+  StopRuleResponse,
+  LLMClassifyResponse,
+} from "@/lib/dashboard-types";
 
 const SAMPLE_PHRASES: { phrase: string; lang: DetectedLanguage; note: string }[] = [
   { phrase: "stop calling me", lang: "en", note: "English explicit" },
@@ -40,6 +47,8 @@ const SAMPLE_PHRASES: { phrase: string; lang: DetectedLanguage; note: string }[]
   { phrase: "ab phone mat karna", lang: "hinglish", note: "Hinglish — first-class" },
   { phrase: "chhodo mujhe", lang: "hinglish", note: "Hinglish — first-class" },
   { phrase: "मुझे कॉल मत करो", lang: "hi", note: "Devanagari Hindi" },
+  { phrase: "yaar please leave me alone na", lang: "hinglish", note: "Fuzzy — LLM only" },
+  { phrase: "bahut ho gaya ab, bas karo", lang: "hinglish", note: "Fuzzy — LLM only" },
 ];
 
 const LANG_BADGE: Record<DetectedLanguage, string> = {
@@ -99,13 +108,82 @@ function HaltedCard({ event }: { event: StopRuleResponse["event"] }) {
   );
 }
 
+function ClassifyPanel({ result }: { result: LLMClassifyResponse }) {
+  const isStop = result.isStopRequest;
+  const Icon = isStop ? CheckCircle2 : XCircle;
+  const tone = isStop
+    ? "border-emerald-300/50 bg-emerald-50/70 dark:bg-emerald-950/30"
+    : "border-border bg-muted/40";
+  const iconTone = isStop
+    ? "text-emerald-600 dark:text-emerald-400"
+    : "text-muted-foreground";
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className={`rounded-lg border p-3 ${tone}`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-2">
+        <Icon className={`size-4 ${iconTone}`} aria-hidden />
+        <span className="text-sm font-medium">
+          {isStop ? "Stop intent detected" : "Not a stop request"}
+        </span>
+        <Badge
+          variant="outline"
+          className={`ml-auto ${LANG_BADGE[result.language]}`}
+        >
+          {result.language.toUpperCase()}
+        </Badge>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-1.5 text-xs sm:grid-cols-3">
+        <div>
+          <span className="text-muted-foreground">Intent: </span>
+          <span className="font-medium">{result.intent}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Confidence: </span>
+          <span className="font-medium tabular-nums">
+            {Math.round(result.confidence * 100)}%
+          </span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Rule: </span>
+          <span className="font-medium font-mono text-[11px]">
+            {result.rule}
+          </span>
+        </div>
+      </div>
+      <p className="mt-2 text-xs italic text-muted-foreground">
+        {result.reasoning}
+      </p>
+      <div className="mt-1.5 text-[10px] text-muted-foreground">
+        Matched by{" "}
+        <span className="font-mono">
+          {result.matchedBy === "llm"
+            ? "LLM fuzzy classifier"
+            : result.matchedBy === "phrase-list"
+              ? "phrase-list"
+              : "none"}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
 export function StopRuleSimulator() {
   const [phrase, setPhrase] = React.useState("");
-  const [debtorToken, setDebtorToken] = React.useState("DEBT-7F3A9C");
+  const [debtorToken, setDebtorToken] = React.useState("");
   const [lastEvent, setLastEvent] = React.useState<
     StopRuleResponse["event"] | null
   >(null);
+  const [classifyResult, setClassifyResult] =
+    React.useState<LLMClassifyResponse | null>(null);
   const submit = useSubmitStopRule();
+  const classify = useLLMClassify();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -126,6 +204,7 @@ export function StopRuleSimulator() {
                 : `${lang.toUpperCase()} stop-rule matched`,
           });
           setPhrase("");
+          setClassifyResult(null);
         },
         onError: (err: Error) =>
           toast.error("Stop-rule failed", { description: err.message }),
@@ -133,8 +212,37 @@ export function StopRuleSimulator() {
     );
   }
 
+  function handleClassify() {
+    if (!phrase.trim()) {
+      toast.error("Enter a phrase to classify");
+      return;
+    }
+    classify.mutate(
+      { phrase: phrase.trim() },
+      {
+        onSuccess: (res) => {
+          setClassifyResult(res);
+          if (res.isStopRequest) {
+            toast.success("Stop intent detected", {
+              description: `${res.language.toUpperCase()} · ${res.rule} · ${Math.round(
+                res.confidence * 100,
+              )}%`,
+            });
+          } else {
+            toast.info("Not a stop request", {
+              description: `Intent: ${res.intent}`,
+            });
+          }
+        },
+        onError: (err: Error) =>
+          toast.error("Classification failed", { description: err.message }),
+      },
+    );
+  }
+
   function pickSample(s: { phrase: string; lang: DetectedLanguage }) {
     setPhrase(s.phrase);
+    setClassifyResult(null);
     toast.info(`Loaded sample (${s.lang.toUpperCase()})`, {
       description: `"${s.phrase}"`,
     });
@@ -157,8 +265,9 @@ export function StopRuleSimulator() {
         </div>
         <CardDescription>
           Type a stop phrase in English, Hindi (Devanagari), or Hinglish
-          (Romanized). Hinglish is a first-class supported language. Submitting
-          halts outreach and writes an OptOutRecord + StopRuleEvent.
+          (Romanized). Hinglish is a first-class supported language. Use{" "}
+          <strong>AI Classify</strong> to test fuzzy/colloquial phrases via the
+          LLM before halting outreach.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -167,14 +276,17 @@ export function StopRuleSimulator() {
             <Input
               value={debtorToken}
               onChange={(e) => setDebtorToken(e.target.value)}
-              placeholder="Debtor token (optional)"
-              aria-label="Debtor token"
+              placeholder="Auto-select debtor"
+              aria-label="Debtor token (optional)"
               className="sm:w-44 font-mono text-xs"
             />
             <div className="relative flex flex-1 items-center">
               <Input
                 value={phrase}
-                onChange={(e) => setPhrase(e.target.value)}
+                onChange={(e) => {
+                  setPhrase(e.target.value);
+                  setClassifyResult(null);
+                }}
                 placeholder='e.g. "mujhe call mat karo"'
                 aria-label="Stop phrase"
                 className="pr-28"
@@ -220,22 +332,40 @@ export function StopRuleSimulator() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <Button
-              type="submit"
-              disabled={submit.isPending}
-              className="gap-1.5 bg-rose-600 text-white hover:bg-rose-600/90 sm:w-auto"
-            >
-              {submit.isPending ? (
-                <ShieldAlert className="size-4 animate-pulse" aria-hidden />
-              ) : (
-                <Send className="size-4" aria-hidden />
-              )}
-              Halt outreach
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClassify}
+                disabled={classify.isPending || !phrase.trim()}
+                className="gap-1.5 border-violet-300/50 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-950/60"
+                aria-label="AI classify the phrase"
+              >
+                {classify.isPending ? (
+                  <Sparkles className="size-4 animate-pulse" aria-hidden />
+                ) : (
+                  <Brain className="size-4" aria-hidden />
+                )}
+                <span className="hidden sm:inline">AI Classify</span>
+                <span className="sm:hidden">AI</span>
+              </Button>
+              <Button
+                type="submit"
+                disabled={submit.isPending}
+                className="gap-1.5 bg-rose-600 text-white hover:bg-rose-600/90 sm:w-auto"
+              >
+                {submit.isPending ? (
+                  <ShieldAlert className="size-4 animate-pulse" aria-hidden />
+                ) : (
+                  <Send className="size-4" aria-hidden />
+                )}
+                Halt outreach
+              </Button>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] text-muted-foreground">Quick:</span>
-            {SAMPLE_PHRASES.slice(0, 6).map((s) => (
+            {SAMPLE_PHRASES.slice(0, 7).map((s) => (
               <button
                 key={s.phrase}
                 type="button"
@@ -247,6 +377,12 @@ export function StopRuleSimulator() {
             ))}
           </div>
         </form>
+
+        <AnimatePresence mode="wait">
+          {classifyResult && (
+            <ClassifyPanel result={classifyResult} key="classify" />
+          )}
+        </AnimatePresence>
 
         <AnimatePresence mode="wait">
           {lastEvent && <HaltedCard event={lastEvent} key={lastEvent.id} />}

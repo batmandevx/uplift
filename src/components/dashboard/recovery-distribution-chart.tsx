@@ -84,12 +84,20 @@ export function RecoveryDistributionChart({ batchId }: { batchId?: string }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="bucket" tickLine={false} axisLine={false} />
+                <XAxis
+                  dataKey="bucket"
+                  tickLine={false}
+                  axisLine={false}
+                  interval={0}
+                  minTickGap={0}
+                  tick={{ fontSize: 11 }}
+                />
                 <YAxis
                   tickFormatter={(v) => `${v}`}
                   tickLine={false}
                   axisLine={false}
                   width={32}
+                  tick={{ fontSize: 11 }}
                 />
                 <Tooltip content={<ChartTooltip />} />
                 <Legend
@@ -104,6 +112,8 @@ export function RecoveryDistributionChart({ batchId }: { batchId?: string }) {
                   strokeWidth={2}
                   fill="url(#treatedFill)"
                   isAnimationActive
+                  dot={{ r: 3, strokeWidth: 0, fill: "var(--chart-1)" }}
+                  activeDot={{ r: 5 }}
                 />
                 <Area
                   type="monotone"
@@ -113,6 +123,8 @@ export function RecoveryDistributionChart({ batchId }: { batchId?: string }) {
                   strokeWidth={2}
                   fill="url(#holdoutFill)"
                   isAnimationActive
+                  dot={{ r: 3, strokeWidth: 0, fill: "var(--chart-4)" }}
+                  activeDot={{ r: 5 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
