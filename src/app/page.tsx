@@ -16,6 +16,7 @@ import { DebtorDrilldown } from "@/components/dashboard/debtor-drilldown";
 import { BatchComparisonChart } from "@/components/dashboard/batch-comparison-chart";
 import { RecoveryTrendCard } from "@/components/dashboard/recovery-trend-card";
 import { AuditTimeline } from "@/components/dashboard/audit-timeline";
+import { MethodologyCard } from "@/components/dashboard/methodology-card";
 import { useOverview } from "@/components/dashboard/queries";
 
 export default function Home() {
@@ -98,6 +99,9 @@ export default function Home() {
               <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
                 <MetaValidationPanel />
                 <RecoveryTrendCard batchId={batchId} />
+              </div>
+              <div className="mt-4">
+                <MethodologyCard batchId={batchId} />
               </div>
             </section>
 

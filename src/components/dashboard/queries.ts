@@ -22,6 +22,9 @@ import type {
   QuietHoursStatus,
   SealBatchResponse,
   BatchComparisonRow,
+  MethodologyResponse,
+  RecordAttemptResponse,
+  ManualOptOutResponse,
 } from "@/lib/dashboard-types";
 
 async function jfetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -247,5 +250,84 @@ export function useRecoveryTrend(batchId?: string, days = 14) {
       jfetch<{ points: { day: string; cumulativeRecovered: number; dailyRecovered: number; attempts: number }[]; batchName: string }>(
         `/api/recovery-trend?batchId=${encodeURIComponent(batchId!)}&days=${days}`,
       ),
+  });
+}
+
+// ---- Phase-4: methodology, debtor write actions ----
+
+export function useMethodology(batchId?: string) {
+  return useQuery<MethodologyResponse>({
+    queryKey: ["methodology", batchId],
+    enabled: !!batchId,
+    queryFn: () =>
+      jfetch<MethodologyResponse>(
+        `/api/methodology?batchId=${encodeURIComponent(batchId!)}`,
+      ),
+  });
+}
+
+export function useRecordAttempt() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      token: string;
+      channel?: string;
+      escalationLevel?: number;
+      outcome: string;
+      amountCollected?: number;
+      transcriptSnippet?: string;
+    }) =>
+      jfetch<RecordAttemptResponse>(
+        `/api/debtors/${encodeURIComponent(args.token)}/attempts`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: args.channel,
+            escalationLevel: args.escalationLevel,
+            outcome: args.outcome,
+            amountCollected: args.amountCollected,
+            transcriptSnippet: args.transcriptSnippet,
+          }),
+        },
+      ),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["debtor", vars.token] });
+      qc.invalidateQueries({ queryKey: ["debtors"] });
+      qc.invalidateQueries({ queryKey: ["overview"] });
+      qc.invalidateQueries({ queryKey: ["recovery-trend"] });
+      qc.invalidateQueries({ queryKey: ["audit"] });
+    },
+  });
+}
+
+export function useManualOptOut() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      token: string;
+      reason?: string;
+      rawPhrase?: string;
+      language?: string;
+    }) =>
+      jfetch<ManualOptOutResponse>(
+        `/api/debtors/${encodeURIComponent(args.token)}/opt-out`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reason: args.reason,
+            rawPhrase: args.rawPhrase,
+            language: args.language,
+          }),
+        },
+      ),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["debtor", vars.token] });
+      qc.invalidateQueries({ queryKey: ["debtors"] });
+      qc.invalidateQueries({ queryKey: ["compliance-rules"] });
+      qc.invalidateQueries({ queryKey: ["overview"] });
+      qc.invalidateQueries({ queryKey: ["audit"] });
+    },
   });
 }

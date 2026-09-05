@@ -264,3 +264,55 @@ export interface AuditTimelineGroup {
   label: string; // e.g. "12 Sep"
   events: AuditEvent[];
 }
+
+// ---- Phase-4 additions (methodology pre-registration, debtor write actions) ----
+
+export interface MethodologyResponse {
+  batchId: string;
+  batchName: string;
+  status: BatchStatus;
+  mandateLevel: string;
+  holdoutRatio: number;
+  analysisPlan: string;
+  methodologyHash: string;
+  preRegisteredAt: string;
+  primaryMetric: string;
+  significanceLevel: number;
+  startedAt?: string | null;
+  sealed: boolean; // true once status !== DRAFT (methodology immutable)
+}
+
+export interface RecordAttemptResponse {
+  ok: boolean;
+  attempt: {
+    id: string;
+    channel: string;
+    escalationLevel: number;
+    outcome: string;
+    amountCollected: number;
+    transcriptSnippet?: string | null;
+    attemptedAt: string;
+  };
+  debtor: {
+    token: string;
+    recoveredAmount: number;
+    attemptCountTotal: number;
+  };
+}
+
+export interface ManualOptOutResponse {
+  ok: boolean;
+  optOutRecord: {
+    id: string;
+    debtorToken: string;
+    reason: string;
+    rawPhrase?: string | null;
+    language: string;
+    detectedAt: string;
+  };
+  debtor: {
+    token: string;
+    optOut: boolean;
+    optOutReason: string | null;
+  };
+}

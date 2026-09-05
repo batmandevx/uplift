@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   Search,
@@ -16,6 +16,8 @@ import {
   History,
   ScrollText,
   Wallet,
+  Plus,
+  AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -38,8 +40,32 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { QueryError } from "./query-error";
-import { useDebtors, useDebtorDetail } from "./queries";
+import {
+  useDebtors,
+  useDebtorDetail,
+  useRecordAttempt,
+  useManualOptOut,
+} from "./queries";
+import { toast } from "sonner";
 import { formatINR, formatDateTime } from "@/lib/format";
 import type {
   DebtorListItem,
@@ -221,6 +247,228 @@ function DetailSheet({
   );
 }
 
+function DebtorActions({
+  token,
+  currentLevel,
+}: {
+  token: string;
+  currentLevel: number;
+}) {
+  const [showForm, setShowForm] = React.useState(false);
+  const [outcome, setOutcome] = React.useState("CONTACTED");
+  const [channel, setChannel] = React.useState("VOICE");
+  const [amount, setAmount] = React.useState("");
+  const [snippet, setSnippet] = React.useState("");
+  const recordAttempt = useRecordAttempt();
+  const manualOptOut = useManualOptOut();
+
+  function handleSubmitAttempt(e: React.FormEvent) {
+    e.preventDefault();
+    recordAttempt.mutate(
+      {
+        token,
+        channel,
+        escalationLevel: currentLevel,
+        outcome,
+        amountCollected: amount ? Number(amount) : undefined,
+        transcriptSnippet: snippet || undefined,
+      },
+      {
+        onSuccess: (res) => {
+          toast.success("Attempt recorded", {
+            description: `${res.attempt.channel} · ${res.attempt.outcome}${
+              res.attempt.amountCollected > 0
+                ? ` · ₹${res.attempt.amountCollected}`
+                : ""
+            }`,
+          });
+          setShowForm(false);
+          setAmount("");
+          setSnippet("");
+        },
+        onError: (err: Error) =>
+          toast.error("Record failed", { description: err.message }),
+      },
+    );
+  }
+
+  function handleOptOut() {
+    manualOptOut.mutate(
+      { token, reason: "MANUAL_OPERATOR_OPTOUT", language: "en" },
+      {
+        onSuccess: () =>
+          toast.success("Debtor opted-out", {
+            description: `${token} suppressed from all outreach.`,
+          }),
+        onError: (err: Error) =>
+          toast.error("Opt-out failed", { description: err.message }),
+      },
+    );
+  }
+
+  const OUTCOMES = [
+    "CONTACTED",
+    "PROMISE_TO_PAY",
+    "PAID",
+    "NO_ANSWER",
+    "REFUSED",
+  ];
+
+  return (
+    <div className="rounded-xl border bg-muted/20 p-3">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          Operator actions
+        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 text-xs"
+            onClick={() => setShowForm((v) => !v)}
+            aria-expanded={showForm}
+            aria-label="Record attempt"
+          >
+            <Plus className="size-3" aria-hidden />
+            Record attempt
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1.5 border-rose-300/50 text-rose-600 text-xs hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                disabled={manualOptOut.isPending}
+                aria-label="Manually opt-out debtor"
+              >
+                <Ban className="size-3" aria-hidden />
+                Opt-out
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle
+                    className="size-4 text-rose-600 dark:text-rose-400"
+                    aria-hidden
+                  />
+                  Manually opt-out {token}?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This permanently halts all outreach for this debtor and
+                  writes an immutable OptOutRecord + audit event. This action
+                  cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleOptOut}
+                  className="bg-rose-600 text-white hover:bg-rose-600/90"
+                >
+                  Confirm opt-out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showForm && (
+          <motion.form
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onSubmit={handleSubmitAttempt}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground">
+                  Channel
+                </label>
+                <Select value={channel} onValueChange={setChannel}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="VOICE">Voice</SelectItem>
+                    <SelectItem value="SMS">SMS</SelectItem>
+                    <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
+                    <SelectItem value="EMAIL">Email</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground">
+                  Outcome
+                </label>
+                <Select value={outcome} onValueChange={setOutcome}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OUTCOMES.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground">
+                  Amount collected (₹)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0"
+                  className="h-8 text-xs tabular-nums"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase text-muted-foreground">
+                  Transcript snippet
+                </label>
+                <Input
+                  value={snippet}
+                  onChange={(e) => setSnippet(e.target.value)}
+                  placeholder="optional"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+            <div className="mt-2 flex justify-end gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs"
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={recordAttempt.isPending}
+                className="h-7 gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-600/90"
+              >
+                {recordAttempt.isPending ? "Recording…" : "Save attempt"}
+              </Button>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function DetailBody({ data }: { data: DebtorDetail }) {
   const recoveryPct = data.recoveryPct;
   return (
@@ -309,6 +557,11 @@ function DetailBody({ data }: { data: DebtorDetail }) {
           </div>
         )}
       </div>
+
+      {/* Write actions: record attempt + manual opt-out */}
+      {!data.optOut && (
+        <DebtorActions token={data.token} currentLevel={data.currentLevel} />
+      )}
 
       {/* Tabs: attempts / opt-outs / audit */}
       <Tabs defaultValue="attempts">

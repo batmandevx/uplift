@@ -20,6 +20,12 @@ model RecoveryBatch {
   mandateLevel  String   @default("SOFT") // SOFT | STANDARD | ENHANCED
   holdoutRatio  Float    @default(0.2) // pre-registered fraction held out
   status        String   @default("DRAFT") // DRAFT | RUNNING | CLOSED | SEALED
+  // Pre-registered methodology (locked at batch start, immutable thereafter)
+  analysisPlan       String?  // free-text: the pre-registered analysis plan
+  methodologyHash    String?  // short fingerprint of the locked plan
+  preRegisteredAt    DateTime? // when the methodology was sealed
+  primaryMetric      String   @default("incremental_recovery_vs_holdout")
+  significanceLevel Float    @default(0.05)
   startedAt     DateTime?
   closedAt      DateTime?
   createdAt     DateTime @default(now())

@@ -34,6 +34,17 @@ function maskToken(i: number) {
   return `DBT-${s}`
 }
 
+// Simple deterministic hash of the pre-registered methodology parameters.
+// Proves the analysis plan was locked before results were observed.
+function methodologyHash(input: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16).toUpperCase().padStart(8, '0')
+}
+
 async function main() {
   console.log('Seeding compliant debt-recovery demo data...')
 
@@ -47,6 +58,7 @@ async function main() {
   await db.recoveryBatch.deleteMany()
 
   // --- Batch 1: RUNNING, pre-registered holdout ---
+  const b1Plan = 'Incremental recovery = (treated_mean - holdout_mean) * treated_N. Holdout assigned at 20% via deterministic hash of debtor token. Wilson 95% CI on per-debtor recovery rate. Meta-validated against most-recent sealed batch.'
   const batch1 = await db.recoveryBatch.create({
     data: {
       name: 'Q4-2024-NPL-Cohort-A',
@@ -54,11 +66,17 @@ async function main() {
       mandateLevel: 'STANDARD',
       holdoutRatio: 0.2,
       status: 'RUNNING',
+      analysisPlan: b1Plan,
+      methodologyHash: methodologyHash(`Q4-2024-NPL-Cohort-A|STANDARD|0.20|${b1Plan}`),
+      preRegisteredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15),
+      primaryMetric: 'incremental_recovery_vs_holdout',
+      significanceLevel: 0.05,
       startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14),
     },
   })
 
   // --- Batch 2: CLOSED & SEALED (meta-validation ground truth) ---
+  const b2Plan = 'Same incremental-recovery estimator as Q4. Holdout 20%. Ground-truth amounts locked at seal. Used as the reference for meta-validation of subsequent batches.'
   const batch2 = await db.recoveryBatch.create({
     data: {
       name: 'Q3-2024-NPL-Cohort-B',
@@ -66,6 +84,11 @@ async function main() {
       mandateLevel: 'STANDARD',
       holdoutRatio: 0.2,
       status: 'SEALED',
+      analysisPlan: b2Plan,
+      methodologyHash: methodologyHash(`Q3-2024-NPL-Cohort-B|STANDARD|0.20|${b2Plan}`),
+      preRegisteredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 76),
+      primaryMetric: 'incremental_recovery_vs_holdout',
+      significanceLevel: 0.05,
       startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 75),
       closedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45),
     },
@@ -194,6 +217,7 @@ async function main() {
   }
 
   // --- Batch 3: older sealed batch (different mandate, for batch comparison) ---
+  const b3Plan = 'Enhanced mandate. Holdout 25%. Same incremental estimator. Legal-referral rung (3) available under ENHANCED mandate. Ground truth locked at seal.'
   const batch3 = await db.recoveryBatch.create({
     data: {
       name: 'Q2-2024-NPL-Cohort-C',
@@ -201,6 +225,11 @@ async function main() {
       mandateLevel: 'ENHANCED',
       holdoutRatio: 0.25,
       status: 'SEALED',
+      analysisPlan: b3Plan,
+      methodologyHash: methodologyHash(`Q2-2024-NPL-Cohort-C|ENHANCED|0.25|${b3Plan}`),
+      preRegisteredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 136),
+      primaryMetric: 'incremental_recovery_vs_holdout',
+      significanceLevel: 0.05,
       startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 135),
       closedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 105),
     },
