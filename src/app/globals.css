@@ -171,3 +171,107 @@
       transparent 60%
     );
 }
+
+/* Glassmorphism card surface — frosted, subtly bordered, layered shadow. */
+@utility glass {
+  background: color-mix(in oklch, var(--card) 78%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  box-shadow:
+    0 1px 0 0 color-mix(in oklch, var(--background) 60%, transparent) inset,
+    0 8px 24px -12px color-mix(in oklch, var(--foreground) 18%, transparent);
+}
+
+/* Gradient ring border (use on a wrapping element). */
+@utility ring-gradient {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--chart-1) 50%, transparent),
+      color-mix(in oklch, var(--chart-2) 30%, transparent),
+      color-mix(in oklch, var(--chart-4) 40%, transparent)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+
+/* Soft outer glow for emphasis (e.g. live status dots). */
+@utility glow-emerald {
+  box-shadow: 0 0 0 0 color-mix(in oklch, var(--chart-2) 70%, transparent);
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+@utility glow-rose {
+  box-shadow: 0 0 0 0 color-mix(in oklch, var(--chart-5) 70%, transparent);
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+@utility glow-amber {
+  box-shadow: 0 0 0 0 color-mix(in oklch, var(--chart-4) 70%, transparent);
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 color-mix(in oklch, currentColor 60%, transparent),
+      0 0 12px 2px color-mix(in oklch, currentColor 30%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px color-mix(in oklch, currentColor 0%, transparent),
+      0 0 18px 4px color-mix(in oklch, currentColor 22%, transparent);
+  }
+}
+
+/* Shimmer sweep for loading skeletons / highlights. */
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--foreground) 8%, transparent),
+      transparent
+    );
+    animation: shimmer-sweep 1.8s ease-in-out infinite;
+  }
+}
+@keyframes shimmer-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Animated aurora drift for the hero backdrop. */
+@utility aurora-drift {
+  animation: aurora-drift 24s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-2%, 3%, 0) scale(1.04);
+  }
+}
+

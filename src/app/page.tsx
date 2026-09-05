@@ -20,6 +20,7 @@ import { AuditTimeline } from "@/components/dashboard/audit-timeline";
 import { MethodologyCard } from "@/components/dashboard/methodology-card";
 import { ComplianceGateBanner } from "@/components/dashboard/compliance-gate-banner";
 import { CommandPalette } from "@/components/dashboard/command-palette";
+import { Reveal } from "@/components/dashboard/reveal";
 import { useKeyboardShortcuts } from "@/components/dashboard/use-keyboard-shortcuts";
 import { useOverview } from "@/components/dashboard/queries";
 
@@ -46,15 +47,17 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-screen flex-col bg-background">
-      {/* Ambient backdrop: dotted grid + soft aurora glow */}
+      {/* Ambient backdrop: dotted grid + animated aurora glow */}
       <div
         className="pointer-events-none fixed inset-0 -z-10 bg-grid opacity-60"
         aria-hidden
       />
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[420px] bg-aurora"
+        className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[480px] overflow-hidden"
         aria-hidden
-      />
+      >
+        <div className="absolute inset-0 bg-aurora aurora-drift" />
+      </div>
       <SiteHeader
         batch={activeBatch}
         batchId={batchId}
@@ -65,32 +68,52 @@ export default function Home() {
         className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 sm:py-8"
         role="main"
       >
+        {/* Hero title */}
+        <Reveal className="mb-5">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Compliant Collections{" "}
+            <span className="bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 bg-clip-text text-transparent">
+              Command Center
+            </span>
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pre-registered holdout · Mandate-gated escalation · Hinglish stop
+            rules — measured, audited, and sealed.
+          </p>
+        </Reveal>
+
         {/* Pillar banner */}
         <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <PillarBanner
-            index={1}
-            title="Measured money recovered"
-            description="Pre-registered holdout · Wilson 95% CI · Meta-validation against sealed batch."
-            tone="emerald"
-          />
-          <PillarBanner
-            index={2}
-            title="Compliant escalation"
-            description="4-rung ladder · Human-approval gate for rung ≥ 2 · Quiet hours & attempt caps."
-            tone="amber"
-          />
-          <PillarBanner
-            index={3}
-            title="Stopping rules"
-            description="Live Hinglish stop-phrase detection · Opt-out written · Outreach halted instantly."
-            tone="rose"
-          />
+          <Reveal delay={0}>
+            <PillarBanner
+              index={1}
+              title="Measured money recovered"
+              description="Pre-registered holdout · Wilson 95% CI · Meta-validation against sealed batch."
+              tone="emerald"
+            />
+          </Reveal>
+          <Reveal delay={0.08}>
+            <PillarBanner
+              index={2}
+              title="Compliant escalation"
+              description="4-rung ladder · Human-approval gate for rung ≥ 2 · Quiet hours & attempt caps."
+              tone="amber"
+            />
+          </Reveal>
+          <Reveal delay={0.16}>
+            <PillarBanner
+              index={3}
+              title="Stopping rules"
+              description="Live Hinglish stop-phrase detection · Opt-out written · Outreach halted instantly."
+              tone="rose"
+            />
+          </Reveal>
         </div>
 
         {/* Live compliance-gate status banner */}
-        <div className="mb-6">
+        <Reveal className="mb-6" delay={0.1}>
           <ComplianceGateBanner batchId={batchId} />
-        </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
           {/* Left main column: Pillar 1 + Pillar 3 */}
@@ -199,23 +222,40 @@ function PillarBanner({
       : tone === "amber"
         ? "border-amber-300/40 bg-amber-50/50 dark:bg-amber-950/20"
         : "border-rose-300/40 bg-rose-50/50 dark:bg-rose-950/20";
-  const dot =
+  const grad =
     tone === "emerald"
-      ? "bg-emerald-500"
+      ? "from-emerald-500 to-teal-500"
       : tone === "amber"
-        ? "bg-amber-500"
-        : "bg-rose-500";
+        ? "from-amber-500 to-orange-500"
+        : "from-rose-500 to-pink-500";
+  const dot =
+    tone === "emerald" ? "bg-emerald-500" : tone === "amber" ? "bg-amber-500" : "bg-rose-500";
+  const glowCls =
+    tone === "emerald"
+      ? "glow-emerald"
+      : tone === "amber"
+        ? "glow-amber"
+        : "glow-rose";
   return (
     <div
-      className={`group rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${ring}`}
+      className={`group relative h-full overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${ring}`}
     >
+      {/* top sheen */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r ${grad} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+        aria-hidden
+      />
       <div className="flex items-center gap-2">
-        <span className="grid size-6 place-items-center rounded-md bg-background text-xs font-semibold text-foreground shadow-sm">
+        <span
+          className={`grid size-7 place-items-center rounded-lg bg-gradient-to-br ${grad} text-xs font-bold text-white shadow-sm`}
+          aria-hidden
+        >
           {index}
         </span>
         <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
         <span
-          className={`ml-auto size-1.5 rounded-full ${dot} opacity-60 transition-opacity group-hover:opacity-100`}
+          className={`ml-auto size-1.5 rounded-full ${dot} ${glowCls} opacity-70 transition-opacity group-hover:opacity-100`}
+          style={{ color: "currentColor" }}
           aria-hidden
         />
       </div>

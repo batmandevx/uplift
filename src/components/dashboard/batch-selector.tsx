@@ -43,7 +43,7 @@ export function BatchSelector({
     >
       <SelectTrigger
         id="batch-selector-trigger"
-        className="w-[220px] sm:w-[280px]"
+        className="w-[240px] sm:w-[300px]"
         aria-label="Select batch"
       >
         <SelectValue
@@ -54,10 +54,10 @@ export function BatchSelector({
         {data?.map((b: Batch) => (
           <SelectItem key={b.id} value={b.id}>
             <span className="flex items-center gap-2">
-              <span className="truncate">{b.name}</span>
+              <span className="max-w-[180px] truncate">{b.name}</span>
               <Badge
                 variant="outline"
-                className={`ml-1 ${statusVariant[b.status]}`}
+                className={`ml-1 shrink-0 whitespace-nowrap ${statusVariant[b.status]}`}
               >
                 {b.status}
               </Badge>

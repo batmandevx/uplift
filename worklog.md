@@ -551,3 +551,61 @@ Unresolved issues / risks / next-phase priorities:
 - Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
 - Consider a bulk batch-level CSV export (all debtors + attempts in one file) for full batch compliance reporting.
 - Consider a print-friendly compliance report view (formatted PDF) combining methodology + audit + debtor summary.
+
+---
+Task ID: 11 (user request — visual enhancement)
+Agent: main (interactive)
+Task: Improve and enhance the frontend — make it beautiful, animated, and attractive. Add more features.
+
+Work Log:
+- Read worklog.md (Tasks 0-10). Project had 23 API routes, command palette, CSV exports, compliance score, methodology tamper-sim, etc. Visual baseline was functional but flat.
+- QA: Re-seeded. Fresh browser session: zero console errors. All features render. Lint clean.
+
+Visual & animation enhancements delivered:
+
+  1. Animated number counters (KPI cards):
+     - New hook useAnimatedNumber (use-animated-number.ts): rAF-based counter with ease-out cubic curve (0 → target over 900ms). Re-animates whenever target changes.
+     - Rewrote OverviewKPIs: Total Recovered, Incremental vs Holdout, Holdout %, and lift % now count up from 0 on load. Compact INR formatter (₹X.XX L / Cr / K) avoids currency-symbol jitter during counting.
+
+  2. Glassmorphism + depth on KPI cards:
+     - Each KPI card now has: a gradient icon badge (rounded-lg, tinted bg matching accent), a hover top-sheen (gradient line that fades in on group-hover), whileHover y:-3 lift, hover:shadow-lg, and scale-in entrance (0.98 → 1).
+     - The "Batch Status" card shows a live emerald pulse dot (glow-emerald) next to RUNNING — a real-time-feel touch.
+
+  3. Gradient pillar banners with glow:
+     - Rewrote PillarBanner: number badges are now gradient-filled (emerald→teal, amber→orange, rose→pink) with white text + shadow. The status dot uses the matching glow utility (glow-emerald/amber/rose) for a soft pulsing halo. Top sheen line on hover. Hover lifts -translate-y-1 + shadow-lg.
+     - Added `h-full` so the 3 banners are equal height in the grid.
+
+  4. Animated aurora hero backdrop:
+     - The fixed top backdrop now uses aurora-drift (24s ease-in-out infinite alternate) — the aurora gradients slowly drift + scale, giving the page a living, premium feel. Height bumped to 480px.
+
+  5. Hero title with gradient text:
+     - Added a hero section above the pillar banners: "Compliant Collections" + gradient-clipped "Command Center" (emerald→amber→rose) + subtitle. Wrapped in Reveal for a fade-rise entrance.
+
+  6. Scroll-reveal staggered entrances:
+     - New component Reveal (reveal.tsx): uses framer-motion useInView (once, -60px margin) to fade+rise children the first time they enter the viewport. Plus staggerContainer/staggerItem variants.
+     - Wrapped the hero title, all 3 pillar banners (with staggered delays 0/0.08/0.16), and the compliance-gate banner in Reveal. Sections now stage in gracefully as you scroll.
+
+  7. New CSS utilities in globals.css:
+     - glass (frosted backdrop-blur card surface), ring-gradient (gradient border via mask), glow-emerald/amber/rose (pulsing box-shadow halos via pulse-glow keyframes), shimmer (loading sweep), aurora-drift (24s drift animation). All use color-mix for theme-aware opacity.
+
+  8. Bug fix — RUNNING badge clipping:
+     - The VLM screenshot review caught that the "RUNNING" status badge in the batch selector was clipped to "RUNNIN" (trigger overflow-hidden + fixed width).
+     - Fixed: widened trigger to 240px/300px, constrained batch name to max-w-[180px] truncate, added shrink-0 + whitespace-nowrap to the badge. Verified via second screenshot: badge now shows "RUNNING" fully.
+
+Verification results:
+- bun run lint: clean.
+- Console: fresh session → zero errors/warnings.
+- dev.log: no error lines.
+- VLM screenshot review (round 1): 8.5/10 polish, confirmed gradient hero title, gradient pillar badges with glow, aurora backdrop, polished KPI icon badges. Flagged the RUNNING clip → fixed.
+- VLM screenshot review (round 2): confirmed "RUNNING" badge now displays fully, no clipping.
+
+Stage Summary:
+- Major visual upgrade: animated counters, glassmorphism KPI cards with gradient icon badges + hover sheens, gradient pillar banners with pulsing glow dots, animated drifting aurora backdrop, gradient hero title, scroll-reveal staggered entrances, live pulse indicator on RUNNING status. Fixed a real badge-clipping bug.
+- 2 new components (use-animated-number, reveal), 6 new CSS utilities (glass, ring-gradient, glow-*, shimmer, aurora-drift), 3 components rewritten/enhanced (overview-kpis, page hero+pillars, batch-selector fix).
+- Lint clean. Zero console errors. Verified via agent-browser + VLM screenshot review (8.5/10).
+
+Unresolved issues / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack). Not a code issue.
+- NextAuth RBAC, socket.io live push, ASR integration, real snapshot-recording cron remain (carried forward).
+- Consider animating the charts' entrance (recharts has isAnimationActive; could add staggered delays).
+- Consider a confetti / success burst animation when a stop-rule halts outreach or a gate is approved.
