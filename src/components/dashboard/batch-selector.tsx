@@ -42,6 +42,7 @@ export function BatchSelector({
       disabled={isLoading || !data}
     >
       <SelectTrigger
+        id="batch-selector-trigger"
         className="w-[220px] sm:w-[280px]"
         aria-label="Select batch"
       >

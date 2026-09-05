@@ -19,9 +19,12 @@ import { RecoveryTrendCard } from "@/components/dashboard/recovery-trend-card";
 import { AuditTimeline } from "@/components/dashboard/audit-timeline";
 import { MethodologyCard } from "@/components/dashboard/methodology-card";
 import { ComplianceGateBanner } from "@/components/dashboard/compliance-gate-banner";
+import { useKeyboardShortcuts } from "@/components/dashboard/use-keyboard-shortcuts";
 import { useOverview } from "@/components/dashboard/queries";
 
 export default function Home() {
+  // Global keyboard shortcuts (T=theme, B=batch selector, ?=help)
+  useKeyboardShortcuts();
   // Default to the RUNNING batch returned by /api/overview; let the operator
   // override via the batch selector in the header.
   const overview = useOverview();

@@ -417,3 +417,48 @@ Unresolved issues / risks / next-phase priorities:
 - Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
 - Consider a compliance-score history sparkline (24h score trend) in the header badge tooltip.
 - Consider more keyboard shortcuts: "T" to toggle theme, "B" to open batch selector.
+
+---
+Task ID: 8 (webDevReview round 8)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0-7). Project had 21 API routes, compliance score badge, keyboard shortcut S, methodology tamper-simulation, batch scatter with quadrant labels, compliance-gate history sparkline, etc.
+- QA: Re-seeded for clean data. Fresh browser session: zero console errors/warnings. All existing features render. Lint clean. dev.log clean. No bugs to fix.
+
+- Added 2 new feature groups:
+
+  1. More keyboard shortcuts (T=theme, B=batch selector, ?=help):
+     - New hook useKeyboardShortcuts (use-keyboard-shortcuts.ts): global keydown listener handling T (toggle light/dark theme via next-themes, with sonner toast confirmation), B (focus + click the batch-selector-trigger to open the dropdown, with toast), and ? (show a toast listing all shortcuts). Shortcuts are ignored when typing in an input/textarea/select/contentEditable or when modifier keys are held. Wired into page.tsx via useKeyboardShortcuts().
+     - Added id="batch-selector-trigger" to the BatchSelector's SelectTrigger so the B shortcut can target it.
+     - Added a keyboard-shortcuts hint row to the SiteFooter: shows kbd badges "S stop · T theme · B batch · ? help" (visible on sm+ screens, with Keyboard icon).
+     - Verified interactively via agent-browser: before T → theme "light"; after T → theme "dark"; after 2nd T → "light" (toggle works both ways). After B → batch selector trigger aria-expanded="true" (dropdown opened).
+
+  2. Compliance-score 24h history sparkline in the badge tooltip:
+     - Rewrote ComplianceScoreBadge (compliance-score-badge.tsx): now also fetches the 24h gate history via useGateHistory and computes a per-hour score trend client-side (mirroring the server formula: blocking −25, pending −10, active −5, floored at 0). The badge tooltip now includes a 40px-tall recharts LineChart sparkline showing the 24h score trend, plus a "24h trend · min X · now Y" summary line. Custom tooltip shows IST time + score at each point.
+     - The sparkline color uses chart-2 (teal/emerald) so it's visually distinct from the gate-state sparklines in the banner.
+     - Verified via agent-browser hover: tooltip shows "Compliance score: 60/100 · Watch", "1 blocking · 1 pending · 1 active · 3 passing", "24h trend · min 50 · now 60" (score dipped to 50 during deeper quiet-hours, now 60), and "blocking −25 · pending −10 · active −5" deduction rules.
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200. No error markers.
+- Console: fresh browser session → zero errors/warnings.
+- agent-browser interactive: T toggles theme (light→dark→light verified); B opens batch selector (aria-expanded=true verified); score badge tooltip shows 24h sparkline with min/now summary + deduction rules.
+- Footer: kbd hints "S stop T theme B batch ? help" render.
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-9 features complete: 3 new keyboard shortcuts (T=theme toggle, B=batch selector open, ?=help toast) + footer kbd hints, compliance-score 24h history sparkline in the badge tooltip (computed client-side from gate history, shows min/now trend).
+- 1 new hook (use-keyboard-shortcuts). 2 existing components extended (compliance-score-badge rewritten with sparkline, site-footer with kbd hints, batch-selector with id, page.tsx with hook). No new API routes or Prisma models.
+- Lint clean. All features verified. Page renders 200 with zero console errors.
+- The dashboard now has 4 keyboard shortcuts (S/T/B/?) for fast operator demoing, and the compliance score badge shows both the live score AND its 24h trend at a glance.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue.
+- NextAuth RBAC: write actions still stamp "operator@console". Next phase: add NextAuth with agent roles + real approver identity.
+- Socket.io live push: all feeds still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time stop-events / gate decisions / audit timeline updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio → pipe through detectStopPhrase + LLM classify for real-time stop detection.
+- Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
+- Consider a command palette (Cmd+K) for power-user navigation across all dashboard sections.
+- Consider a CSV export of the audit timeline for compliance reporting.
