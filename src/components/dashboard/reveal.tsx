@@ -10,12 +10,18 @@ export function Reveal({
   children,
   delay = 0,
   y = 16,
+  scale = 1,
+  spring = false,
   className,
   as = "div",
 }: {
   children: React.ReactNode;
   delay?: number;
   y?: number;
+  /** Initial scale when hidden (1 = no scale). Slight undershoot adds pop. */
+  scale?: number;
+  /** Use a bouncy spring transition instead of a smooth ease-out. */
+  spring?: boolean;
   className?: string;
   as?: "div" | "section" | "li" | "article";
 }) {
@@ -27,9 +33,13 @@ export function Reveal({
   return (
     <MotionTag
       ref={ref}
-      initial={{ opacity: 0, y }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
-      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y, scale }}
+      animate={inView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y, scale }}
+      transition={
+        spring
+          ? { type: "spring", stiffness: 120, damping: 16, delay }
+          : { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }
+      }
       className={className}
     >
       {children}

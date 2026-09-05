@@ -14,7 +14,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSealBatch } from "./queries";
+import { ScrollProgress } from "./scroll-progress";
+import { fireConfetti } from "./confetti-cannon";
 import { toast } from "sonner";
+import { ThesisComparisonModal } from "./thesis-comparison-modal";
+import { RecoveryReceiptModal } from "./recovery-receipt-modal";
 import type { Batch } from "@/lib/dashboard-types";
 
 export function SiteHeader({
@@ -33,12 +37,14 @@ export function SiteHeader({
   function onSeal() {
     if (!batchId) return;
     seal.mutate(batchId, {
-      onSuccess: (res) =>
+      onSuccess: (res) => {
+        fireConfetti();
         toast.success("Batch sealed", {
           description: `${res.batch.name} locked. Ground truth: ₹${res.groundTruth.incrementalRupees.toLocaleString(
             "en-IN",
           )} incremental recovery across ${res.groundTruth.treatedN} treated.`,
-        }),
+        });
+      },
       onError: (e: Error) =>
         toast.error("Seal failed", { description: e.message }),
     });
@@ -49,18 +55,21 @@ export function SiteHeader({
       className="sticky top-0 z-40 w-full glass border-b border-border/40 backdrop-blur-xl shadow-xs"
       role="banner"
     >
+      <ScrollProgress />
       <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-2.5 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4">
         <div className="flex items-center gap-3">
-          <div className="grid size-9.5 place-items-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 ring-1 ring-white/20">
+          <div className="grid size-9.5 place-items-center rounded-lg bg-linear-to-br from-emerald-400 via-teal-500 to-cyan-600 text-white shadow-md shadow-emerald-500/25 ring-1 ring-white/20">
             <ShieldCheck className="size-5" aria-hidden />
           </div>
           <div className="leading-tight">
-            <h1 className="text-sm font-bold tracking-tight sm:text-base flex items-center gap-2">
-              <span>SealedRecovery</span>
+            <h1 className="text-sm font-extrabold tracking-tight sm:text-base flex items-center gap-2">
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Uplift</span>
+              <span className="text-muted-foreground/60 font-light">/</span>
+              <span className="text-xs font-semibold text-foreground/90">SealedRecovery</span>
               <span className="inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </h1>
             <p className="text-[11px] font-medium text-muted-foreground sm:text-xs">
-              Compliant Collections Ops
+              The agent that proves every rupee · Track 03
             </p>
           </div>
           {batch?.region && (
@@ -72,6 +81,19 @@ export function SiteHeader({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <ThesisComparisonModal />
+          <RecoveryReceiptModal
+            trigger={
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 text-xs font-semibold border-emerald-500/30 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/10"
+              >
+                <Lock className="size-3.5" />
+                <span>Receipts (Saboot)</span>
+              </Button>
+            }
+          />
           <ComplianceScoreBadge batchId={batchId} />
           <QuietHoursClock />
           {canSeal && (

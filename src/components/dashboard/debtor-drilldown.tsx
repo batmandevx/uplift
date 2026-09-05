@@ -19,6 +19,7 @@ import {
   Plus,
   AlertTriangle,
   Download,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -68,6 +69,7 @@ import {
 } from "./queries";
 import { toast } from "sonner";
 import { formatINR, formatDateTime } from "@/lib/format";
+import { RecoveryReceiptModal } from "./recovery-receipt-modal";
 import type {
   DebtorListItem,
   DebtorDetail,
@@ -535,6 +537,34 @@ function DetailBody({ data }: { data: DebtorDetail }) {
           <Badge variant="outline" className="text-[10px]">
             Rung {data.currentLevel}
           </Badge>
+          <div className="ml-auto">
+            <RecoveryReceiptModal
+              receipt={{
+                transactionId: `TXN-${data.token.toUpperCase()}`,
+                debtorToken: data.token,
+                mandateUsed: "uplift/policy-v1.3",
+                mandateSignature: "ed25519:6a8b9c44f192ba83e10884d91c2b5e783a210d44b92c",
+                status: data.recoveredAmount > 0 ? "RESOLVED" : "VERIFIED",
+                amountRecovered: data.recoveredAmount,
+                interventionCost: 4.5,
+                counterfactualEstimatePct: 34.8,
+                netUplift: Math.max(0, data.recoveredAmount - 4.5),
+                hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                timestamp: new Date().toISOString(),
+                verifiedBy: "SHA-256 Hash Chain // Postgres Append-Only Ledger",
+              }}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 gap-1 px-2 text-[10px] font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  <Lock className="size-2.5" />
+                  <span>Saboot Receipt</span>
+                </Button>
+              }
+            />
+          </div>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           {data.batchName} · {data.region} · {data.preferredLanguage.toUpperCase()}

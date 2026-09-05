@@ -22,6 +22,8 @@ import { QueryError } from "./query-error";
 import { useOverview } from "./queries";
 import { formatNumber, formatPct } from "@/lib/format";
 import { useAnimatedNumber } from "./use-animated-number";
+import { SpotlightCard } from "./spotlight-card";
+import { CircularProgress } from "./circular-progress";
 import type { BatchStatus } from "@/lib/dashboard-types";
 
 const statusVariant: Record<BatchStatus, string> = {
@@ -66,7 +68,7 @@ function KpiCard({
   sub,
   accent = "default",
   index,
-  glow,
+  trailing,
 }: {
   icon: LucideIcon;
   label: string;
@@ -74,17 +76,9 @@ function KpiCard({
   sub?: React.ReactNode;
   accent?: "default" | "emerald" | "amber" | "rose";
   index: number;
-  glow?: boolean;
+  /** Optional node rendered in the icon slot (e.g. a progress ring). */
+  trailing?: React.ReactNode;
 }) {
-  const accentText =
-    accent === "emerald"
-      ? "text-emerald-500 dark:text-emerald-400"
-      : accent === "amber"
-        ? "text-amber-500 dark:text-amber-400"
-        : accent === "rose"
-          ? "text-rose-500 dark:text-rose-400"
-          : "text-primary";
-
   const accentIconBg =
     accent === "emerald"
       ? "bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 shadow-xs shadow-emerald-500/10"
@@ -94,50 +88,48 @@ function KpiCard({
           ? "bg-gradient-to-br from-rose-500/20 to-pink-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 shadow-xs shadow-rose-500/10"
           : "bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 text-foreground";
 
-  const topBarGrad =
+  const spotlightAccent =
     accent === "emerald"
-      ? "from-emerald-500 via-teal-400 to-transparent"
+      ? "emerald"
       : accent === "amber"
-        ? "from-amber-500 via-yellow-400 to-transparent"
+        ? "amber"
         : accent === "rose"
-          ? "from-rose-500 via-pink-400 to-transparent"
-          : "from-primary/50 via-primary/20 to-transparent";
+          ? "rose"
+          : "none";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 14, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -3 }}
       className="h-full"
     >
-      <Card className="group relative h-full overflow-hidden transition-all duration-300">
-        {/* Permanent subtle accent line at top */}
-        <div
-          className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${topBarGrad}`}
-          aria-hidden
-        />
-        <CardHeader className="pb-2 pt-5">
-          <div className="flex items-center justify-between">
-            <CardDescription className="text-xs font-medium tracking-wide uppercase text-muted-foreground/90">
-              {label}
-            </CardDescription>
-            <span
-              className={`grid size-8 place-items-center rounded-lg ${accentIconBg} transition-transform duration-200 group-hover:scale-105`}
-            >
-              <Icon className="size-4" aria-hidden />
-            </span>
-          </div>
-          <CardTitle className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
-            {value}
-          </CardTitle>
-        </CardHeader>
-        {sub && (
-          <CardContent className="pt-0 pb-4">
-            <div className="text-xs text-muted-foreground">{sub}</div>
-          </CardContent>
-        )}
-      </Card>
+      <SpotlightCard accent={spotlightAccent} className="rounded-xl">
+        <Card className="group relative h-full overflow-hidden transition-all duration-300">
+          <CardHeader className="pb-2 pt-5">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-xs font-medium tracking-wide uppercase text-muted-foreground/90">
+                {label}
+              </CardDescription>
+              {trailing ?? (
+                <span
+                  className={`grid size-8 place-items-center rounded-lg ${accentIconBg} transition-transform duration-200 group-hover:scale-105`}
+                >
+                  <Icon className="size-4" aria-hidden />
+                </span>
+              )}
+            </div>
+            <CardTitle className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+              {value}
+            </CardTitle>
+          </CardHeader>
+          {sub && (
+            <CardContent className="pt-0 pb-4">
+              <div className="text-xs text-muted-foreground">{sub}</div>
+            </CardContent>
+          )}
+        </Card>
+      </SpotlightCard>
     </motion.div>
   );
 }
@@ -230,6 +222,16 @@ export function OverviewKPIs() {
           icon={Scale}
           label="Pre-registered Holdout"
           value={<AnimatedPct value={kpis.holdoutRatio * 100} digits={0} />}
+          trailing={
+            <CircularProgress
+              value={kpis.holdoutRatio * 100}
+              size={44}
+              strokeWidth={5}
+              gradientId="holdout-ring"
+              showValue={false}
+              delay={0.5}
+            />
+          }
           sub={
             <>
               treated{" "}
@@ -247,15 +249,11 @@ export function OverviewKPIs() {
           initial={{ opacity: 0, y: 14, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.45, delay: 0.21, ease: [0.22, 1, 0.36, 1] }}
-          whileHover={{ y: -3 }}
           className="h-full"
         >
-          <Card className="group relative h-full overflow-hidden transition-all duration-300">
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent"
-              aria-hidden
-            />
-            <CardHeader className="pb-2 pt-5">
+          <SpotlightCard accent="emerald" className="rounded-xl">
+            <Card className="group relative h-full overflow-hidden transition-all duration-300">
+              <CardHeader className="pb-2 pt-5">
               <div className="flex items-center justify-between">
                 <CardDescription className="text-xs font-medium tracking-wide uppercase text-muted-foreground/90">
                   Batch Status
@@ -291,7 +289,8 @@ export function OverviewKPIs() {
                 </span>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </SpotlightCard>
         </motion.div>
       </div>
     </section>

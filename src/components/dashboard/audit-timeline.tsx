@@ -179,12 +179,24 @@ export function AuditTimeline() {
             ))}
           </div>
         ) : groups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center">
-            <ScrollText className="size-6 text-muted-foreground" aria-hidden />
-            <p className="text-sm font-medium">No audit events</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              Compliance events will appear here as they occur.
-            </p>
+          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-12 text-center">
+            <div className="relative grid place-items-center">
+              <span className="ping-ring absolute size-12 rounded-full" aria-hidden />
+              <span className="grid size-12 place-items-center rounded-full border bg-muted/40">
+                <ScrollText className="size-5 text-muted-foreground float-slow" aria-hidden />
+              </span>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Listening for compliance events</p>
+              <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">
+                Stop-rule triggers, escalation decisions, and batch lifecycle
+                events will stream in here as they happen.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
+              <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden />
+              Audit feed armed
+            </span>
           </div>
         ) : (
           <ol
