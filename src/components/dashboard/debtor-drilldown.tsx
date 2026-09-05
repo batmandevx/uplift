@@ -18,6 +18,7 @@ import {
   Wallet,
   Plus,
   AlertTriangle,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -222,8 +223,47 @@ function DetailSheet({
             <Users className="size-4 text-muted-foreground" aria-hidden />
             Debtor drill-down
           </SheetTitle>
-          <SheetDescription className="font-mono text-xs">
-            {token ?? "—"}
+          <SheetDescription className="flex items-center gap-2 font-mono text-xs">
+            <span>{token ?? "—"}</span>
+            {token && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 gap-1 px-2 text-[11px]"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `/api/debtors/${encodeURIComponent(token)}/export`,
+                    );
+                    if (!res.ok) throw new Error("Export failed");
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download =
+                      res.headers
+                        .get("Content-Disposition")
+                        ?.match(/filename="([^"]+)"/)?.[1] ??
+                      `debtor-${token}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    toast.success("Debtor CSV exported", {
+                      description: `${token} compliance record downloaded.`,
+                    });
+                  } catch (e) {
+                    toast.error("Export failed", {
+                      description: (e as Error).message,
+                    });
+                  }
+                }}
+                aria-label={`Export ${token} compliance record as CSV`}
+              >
+                <Download className="size-3" aria-hidden />
+                CSV
+              </Button>
+            )}
           </SheetDescription>
         </SheetHeader>
 

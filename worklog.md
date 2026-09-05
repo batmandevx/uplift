@@ -511,3 +511,43 @@ Unresolved issues / risks / next-phase priorities:
 - Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
 - Consider adding debtor-level CSV export (per-debtor attempts + opt-outs + audit) from the drawer.
 - Consider a dark-mode-first toggle in the command palette for the theme action icon.
+
+---
+Task ID: 10 (webDevReview round 10)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0-9). Project had 22 API routes, command palette (Cmd+K), audit CSV export, 4 keyboard shortcuts, compliance score with 24h sparkline, methodology tamper-simulation + diff view, batch scatter with quadrant labels, etc.
+- QA: Re-seeded for clean data. Fresh browser session: zero console errors/warnings. All existing features render (including CSV button in audit timeline, /100 score badge, command palette). Lint clean. dev.log clean. No bugs to fix.
+
+- Added 1 new feature + 1 new API route:
+
+  1. Per-debtor CSV export from the drawer:
+     - New endpoint GET /api/debtors/[token]/export — returns a comprehensive per-debtor compliance CSV with 4 sections: (1) debtor summary (token, batch, region, language, outstanding/recovered amounts, isHoldout, optOut, optOutReason, currentLevel, attemptCountTotal), (2) attempts (timestamp_ist, channel, escalation_level, outcome, amount_collected, transcript_snippet), (3) opt-out records (timestamp_ist, source, reason, language, raw_phrase), (4) audit events (timestamp_ist, actor, action, detail). All timestamps converted to IST (UTC+5:30), all string fields properly CSV-escaped (RFC 4180 doubled quotes). Returns a timestamped filename (debtor-{TOKEN}-{timestamp}.csv) with Content-Type text/csv + Content-Disposition attachment headers.
+     - Verified via curl: returns valid CSV with all 4 sections, proper escaping, IST timestamps, correct debtor summary fields.
+     - Added a "CSV" export button (Download icon, ghost variant) to the debtor drill-down Sheet header, next to the debtor token. On click: fetches the CSV, creates a Blob, triggers download via a temporary anchor, shows a sonner toast ("Debtor CSV exported · {token} compliance record downloaded."). Added Download icon to the lucide-react imports.
+     - Verified via agent-browser: opened DBT-000C drawer → "Export DBT-000C compliance record as CSV" button renders with "CSV" label.
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200. No error markers.
+- Console: fresh browser session → zero errors/warnings.
+- API: /api/debtors/DBT-0001/export returns valid CSV with 4 sections (summary, attempts, opt-outs, audit), proper escaping, IST timestamps.
+- agent-browser: debtor drawer CSV button renders ("Export DBT-000C compliance record as CSV"); clickable.
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-11 features complete: per-debtor CSV export from the drawer (new API + button in drawer header).
+- 1 new API route added (total now 23). 1 existing component extended (debtor-drilldown with CSV button + Download icon import).
+- Lint clean. All features verified. Page renders 200 with zero console errors.
+- Operators can now export both batch-level (audit timeline) and debtor-level (per-debtor attempts + opt-outs + audit) compliance records as CSV files for regulatory reporting.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue.
+- NextAuth RBAC: write actions still stamp "operator@console". Next phase: add NextAuth with agent roles + real approver identity.
+- Socket.io live push: all feeds still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time stop-events / gate decisions / audit timeline updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio → pipe through detectStopPhrase + LLM classify for real-time stop detection.
+- Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
+- Consider a bulk batch-level CSV export (all debtors + attempts in one file) for full batch compliance reporting.
+- Consider a print-friendly compliance report view (formatted PDF) combining methodology + audit + debtor summary.
