@@ -372,3 +372,48 @@ Unresolved issues / risks / next-phase priorities:
 - Gate-history: record real snapshots periodically (currently only seeded at seed time). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
 - Consider a batch-level "compliance score" (0-100) summarizing all gate states into a single health metric.
 - Consider adding a keyboard shortcut (e.g. "S") to focus the stop-rule simulator input for faster demoing.
+
+---
+Task ID: 7 (webDevReview round 7)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0-6). Project had 21 API routes, methodology diff view, batch scatter with 3 quadrant labels, compliance-gate history sparkline, tamper-simulation, etc.
+- QA: Re-seeded for clean data. Fresh browser session: zero console errors/warnings. All existing features render. Lint clean. dev.log clean. No bugs to fix.
+
+- Added 2 new features:
+
+  1. Batch-level compliance score (0-100 health metric):
+     - Extended GET /api/compliance-gates to compute a `score` field: starts at 100, deducts per gate by severity — blocking −25, pending −10, active −5 per gate — floored at 0. Verified: at ~00:30 IST returns score 60 (1 blocking quiet-hours × 25 + 1 pending × 10 + 1 active × 5 = 40 deducted).
+     - Extended ComplianceGatesResponse type with `score: number`.
+     - New component ComplianceScoreBadge (compliance-score-badge.tsx): compact header badge showing the numeric score + "/100" + a mini animated progress bar. Color-coded by tier: ≥85 emerald "Healthy" (ShieldCheck), ≥60 amber "Watch" (Gauge), <60 rose "Blocked" (ShieldAlert). Tooltip shows the full breakdown (blocking/pending/active/passing counts + deduction rules). Polls every 60s via useComplianceGates.
+     - Wired into the SiteHeader before the QuietHoursClock.
+     - Verified via agent-browser: "60 /100" with "Watch" label renders in the header, tooltip shows "Compliance score: 60/100 · Watch · 1 blocking · 1 pending · 1 active · 3 passing" + deduction rules.
+
+  2. Keyboard shortcut "S" to focus the stop-rule simulator input:
+     - Extended StopRuleSimulator: added a phraseInputRef + a global keydown listener. When "S" is pressed (and the user isn't already in an input/textarea/select/contentEditable, and no modifier keys), it preventDefaults, focuses the stop-phrase input, and scrolls it into view smoothly. Added a small "S" kbd hint badge in the card description ("S to focus").
+     - Verified interactively via agent-browser: before pressing S → input not focused; after pressing S → input focused. The shortcut works and the hint badge renders.
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200. No error markers.
+- Console: fresh browser session → zero errors/warnings.
+- API: /api/compliance-gates returns score: 60 with correct summary.
+- agent-browser: compliance score badge "60 /100" + "Watch" renders in header with tooltip; keyboard shortcut S focuses the stop-phrase input (verified focused=false before, focused=true after).
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-8 features complete: batch-level compliance score (0-100 health metric with per-gate deductions, header badge with animated progress bar + tooltip), keyboard shortcut "S" to focus the stop-rule simulator input (with kbd hint badge).
+- 1 API route extended (no new routes). 1 new component (compliance-score-badge). 2 existing components extended (site-header, stop-rule-simulator).
+- Lint clean. All features verified. Page renders 200 with zero console errors.
+- The compliance score gives operators a single-glance health metric (60/100 "Watch" during quiet hours, 90/100 "Healthy" during business hours), and the "S" shortcut enables fast demoing of the Hinglish stop-rule flow.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue.
+- NextAuth RBAC: write actions still stamp "operator@console". Next phase: add NextAuth with agent roles + real approver identity.
+- Socket.io live push: all feeds still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time stop-events / gate decisions / audit timeline updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio → pipe through detectStopPhrase + LLM classify for real-time stop detection.
+- Gate-history: record real snapshots periodically (currently only seeded). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
+- Consider a compliance-score history sparkline (24h score trend) in the header badge tooltip.
+- Consider more keyboard shortcuts: "T" to toggle theme, "B" to open batch selector.

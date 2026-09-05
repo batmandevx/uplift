@@ -127,5 +127,20 @@ export async function GET(req: NextRequest) {
       active: (optOutCount > 0 ? 1 : 0) + (atDailyCap > 0 ? 1 : 0) + (atTotalCap > 0 ? 1 : 0),
       passing: 6 - (insideQuiet || batchNotRunning ? 1 : 0) - (pendingGates > 0 ? 1 : 0) - (optOutCount > 0 ? 1 : 0) - (atDailyCap > 0 ? 1 : 0) - (atTotalCap > 0 ? 1 : 0),
     },
+    // Compliance score: 0-100 health metric. Starts at 100; per-gate deductions:
+    //   blocking = -25, pending = -10, active = -5. Floored at 0.
+    // A "blocking" gate (quiet-hours, batch not running) is the most severe —
+    // it halts outreach entirely. "pending" means a gate needs human action.
+    // "active" means a gate is enforcing (opt-outs, caps) — expected during ops.
+    score: Math.max(
+      0,
+      100 -
+        ((insideQuiet || batchNotRunning ? 1 : 0) * 25 +
+          (pendingGates > 0 ? 1 : 0) * 10 +
+          ((optOutCount > 0 ? 1 : 0) +
+            (atDailyCap > 0 ? 1 : 0) +
+            (atTotalCap > 0 ? 1 : 0)) *
+            5),
+    ),
   });
 }

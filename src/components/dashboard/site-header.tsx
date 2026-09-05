@@ -4,6 +4,7 @@ import { ShieldCheck, MapPin, Lock } from "lucide-react";
 import { BatchSelector } from "./batch-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { QuietHoursClock } from "./quiet-hours-clock";
+import { ComplianceScoreBadge } from "./compliance-score-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +71,7 @@ export function SiteHeader({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <ComplianceScoreBadge batchId={batchId} />
           <QuietHoursClock />
           {canSeal && (
             <TooltipProvider delayDuration={150}>

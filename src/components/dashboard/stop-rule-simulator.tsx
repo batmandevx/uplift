@@ -184,6 +184,33 @@ export function StopRuleSimulator() {
     React.useState<LLMClassifyResponse | null>(null);
   const submit = useSubmitStopRule();
   const classify = useLLMClassify();
+  const phraseInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Global keyboard shortcut: press "S" (when not already typing in an
+  // input/textarea) to focus the stop-phrase input for fast demoing.
+  React.useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      const isEditable =
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        target?.isContentEditable;
+      if (isEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        phraseInputRef.current?.focus();
+        phraseInputRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -268,6 +295,10 @@ export function StopRuleSimulator() {
           (Romanized). Hinglish is a first-class supported language. Use{" "}
           <strong>AI Classify</strong> to test fuzzy/colloquial phrases via the
           LLM before halting outreach.
+          <span className="ml-1 inline-flex items-center gap-0.5 rounded border bg-muted/60 px-1 py-px text-[9px] font-mono align-middle">
+            S
+          </span>{" "}
+          to focus.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -282,6 +313,7 @@ export function StopRuleSimulator() {
             />
             <div className="relative flex flex-1 items-center">
               <Input
+                ref={phraseInputRef}
                 value={phrase}
                 onChange={(e) => {
                   setPhrase(e.target.value);

@@ -338,6 +338,7 @@ export interface ComplianceGatesResponse {
     active: number;
     passing: number;
   };
+  score: number; // 0-100 compliance health metric
 }
 
 export interface GateHistoryPoint {
