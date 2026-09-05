@@ -26,21 +26,23 @@ import { useRecoveryDistribution } from "./queries";
 function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-medium">Recovery bucket: {label}</div>
-      {payload.map((p) => (
-        <div key={p.dataKey as string} className="flex items-center gap-2">
-          <span
-            className="size-2.5 rounded-full"
-            style={{ backgroundColor: p.color as string }}
-            aria-hidden
-          />
-          <span className="capitalize text-muted-foreground">{p.name}</span>
-          <span className="ml-auto font-medium tabular-nums text-foreground">
-            {p.value as number} debtors
-          </span>
-        </div>
-      ))}
+    <div className="glass rounded-lg border border-border/60 bg-popover/95 p-3 text-xs shadow-xl backdrop-blur-md">
+      <div className="mb-2 font-bold text-foreground">Recovery band: {label}</div>
+      <div className="space-y-1.5">
+        {payload.map((p) => (
+          <div key={p.dataKey as string} className="flex items-center gap-3">
+            <span
+              className="size-2 rounded-full shadow-xs"
+              style={{ backgroundColor: p.color as string }}
+              aria-hidden
+            />
+            <span className="capitalize text-muted-foreground font-medium">{p.name}</span>
+            <span className="ml-auto font-semibold tabular-nums text-foreground">
+              {p.value as number} debtors
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

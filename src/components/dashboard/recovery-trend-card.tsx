@@ -33,22 +33,25 @@ function SparkTooltip({ active, payload }: TooltipProps<number, string>) {
   } | null;
   if (!p) return null;
   return (
-    <div className="rounded-md border bg-popover px-2.5 py-1.5 text-[11px] shadow-md">
-      <div className="font-medium tabular-nums">{p.day}</div>
-      <div className="text-muted-foreground">
-        Cumulative:{" "}
-        <span className="font-medium tabular-nums text-foreground">
-          {formatINR(p.cumulativeRecovered, { compact: true })}
-        </span>
-      </div>
-      <div className="text-muted-foreground">
-        Daily:{" "}
-        <span className="font-medium tabular-nums text-emerald-600 dark:text-emerald-400">
-          +{formatINR(p.dailyRecovered, { compact: true })}
-        </span>
-      </div>
-      <div className="text-muted-foreground">
-        Attempts: <span className="tabular-nums">{p.attempts}</span>
+    <div className="glass rounded-lg border border-border/60 bg-popover/95 p-2.5 text-xs shadow-xl backdrop-blur-md">
+      <div className="font-bold tabular-nums text-foreground mb-1">{p.day}</div>
+      <div className="space-y-0.5">
+        <div className="flex items-center justify-between gap-3 text-muted-foreground">
+          <span>Cumulative:</span>
+          <span className="font-semibold tabular-nums text-foreground">
+            {formatINR(p.cumulativeRecovered, { compact: true })}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3 text-muted-foreground">
+          <span>Daily:</span>
+          <span className="font-semibold tabular-nums text-emerald-500 dark:text-emerald-400">
+            +{formatINR(p.dailyRecovered, { compact: true })}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3 text-muted-foreground border-t border-border/40 pt-1 mt-1">
+          <span>Attempts:</span>
+          <span className="font-medium tabular-nums text-foreground">{p.attempts}</span>
+        </div>
       </div>
     </div>
   );

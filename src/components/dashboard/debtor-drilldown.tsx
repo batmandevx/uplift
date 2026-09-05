@@ -122,7 +122,7 @@ function DebtorRow({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: Math.min(index * 0.025, 0.4) }}
       onClick={() => onOpen(d.token)}
-      className="flex w-full items-center gap-3 rounded-lg border bg-card/60 p-3 text-left transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex w-full items-center gap-3 rounded-lg border border-border/60 bg-card/40 p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:bg-card/80 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label={`Open detail for ${d.token}`}
     >
       <Icon className={`size-4 shrink-0 ${iconTone}`} aria-hidden />
@@ -802,16 +802,16 @@ export function DebtorDrilldown({ batchId }: { batchId?: string }) {
               className="pl-8"
             />
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {statusFilters.map((f) => (
               <button
                 key={f.key}
                 type="button"
                 onClick={() => setStatus(f.key)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                className={`rounded-full border px-3 py-1 text-xs transition-all duration-150 active:scale-95 ${
                   status === f.key
-                    ? "border-foreground/40 bg-foreground text-background"
-                    : "bg-background hover:bg-accent"
+                    ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold shadow-xs"
+                    : "border-border/60 bg-background/80 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
                 aria-pressed={status === f.key}
               >

@@ -46,25 +46,26 @@ export function SiteHeader({
 
   return (
     <header
-      className="sticky top-0 z-40 w-full border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      className="sticky top-0 z-40 w-full glass border-b border-border/40 backdrop-blur-xl shadow-xs"
       role="banner"
     >
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4">
+      <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-2.5 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-4">
         <div className="flex items-center gap-3">
-          <div className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground shadow-sm">
+          <div className="grid size-9.5 place-items-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 ring-1 ring-white/20">
             <ShieldCheck className="size-5" aria-hidden />
           </div>
           <div className="leading-tight">
-            <h1 className="text-sm font-semibold tracking-tight sm:text-base">
-              SealedRecovery
+            <h1 className="text-sm font-bold tracking-tight sm:text-base flex items-center gap-2">
+              <span>SealedRecovery</span>
+              <span className="inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </h1>
-            <p className="text-[11px] text-muted-foreground sm:text-xs">
+            <p className="text-[11px] font-medium text-muted-foreground sm:text-xs">
               Compliant Collections Ops
             </p>
           </div>
           {batch?.region && (
-            <Badge variant="outline" className="ml-1 hidden gap-1 sm:inline-flex">
-              <MapPin className="size-3" aria-hidden />
+            <Badge variant="outline" className="ml-1 hidden gap-1 sm:inline-flex bg-background/50 border-border/60 text-xs">
+              <MapPin className="size-3 text-muted-foreground" aria-hidden />
               {batch.region}
             </Badge>
           )}
@@ -82,7 +83,7 @@ export function SiteHeader({
                     variant="outline"
                     onClick={onSeal}
                     disabled={seal.isPending}
-                    className="h-8 gap-1.5 border-amber-300/50 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/60"
+                    className="h-8 gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/20 font-medium"
                     aria-label="Seal batch — lock ground truth"
                   >
                     <Lock className="size-3.5" aria-hidden />
@@ -99,6 +100,7 @@ export function SiteHeader({
           <ThemeToggle />
         </div>
       </div>
+      <div className="h-[1px] w-full bg-linear-to-r from-transparent via-emerald-500/20 to-transparent" />
     </header>
   );
 }

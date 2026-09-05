@@ -36,21 +36,30 @@ function ChartTooltip({ active, payload }: TooltipProps<number, string>) {
     total: number;
   };
   return (
-    <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-medium">{p.group}</div>
-      <div className="text-muted-foreground">
-        Mean: <span className="font-medium text-foreground">{formatINR(p.mean)}</span>
+    <div className="glass rounded-lg border border-border/60 bg-popover/95 p-3 text-xs shadow-xl backdrop-blur-md">
+      <div className="mb-1.5 font-bold text-foreground flex items-center gap-1.5">
+        <span className={`size-2 rounded-full ${p.group === "Treated" ? "bg-emerald-500" : "bg-amber-500"}`} />
+        <span>{p.group} Cohort</span>
       </div>
-      <div className="text-muted-foreground">
-        95% CI:{" "}
-        <span className="font-medium text-foreground">
-          {formatINR(p.ciLo)} – {formatINR(p.ciHi)}
-        </span>
-      </div>
-      <div className="text-muted-foreground">
-        n = <span className="font-medium text-foreground">{formatNumber(p.n)}</span>{" "}
-        · total{" "}
-        <span className="font-medium text-foreground">{formatINR(p.total, { compact: true })}</span>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+          <span>Mean:</span>
+          <span className="font-semibold text-foreground tabular-nums">{formatINR(p.mean)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+          <span>95% CI:</span>
+          <span className="font-medium text-foreground tabular-nums">
+            {formatINR(p.ciLo)} – {formatINR(p.ciHi)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-muted-foreground border-t border-border/40 pt-1 mt-1">
+          <span>Sample size:</span>
+          <span className="font-medium text-foreground tabular-nums">{formatNumber(p.n)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+          <span>Total:</span>
+          <span className="font-semibold text-foreground tabular-nums">{formatINR(p.total, { compact: true })}</span>
+        </div>
       </div>
     </div>
   );

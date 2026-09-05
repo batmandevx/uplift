@@ -370,11 +370,11 @@ export function StopRuleSimulator() {
                 variant="outline"
                 onClick={handleClassify}
                 disabled={classify.isPending || !phrase.trim()}
-                className="gap-1.5 border-violet-300/50 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:hover:bg-violet-950/60"
+                className="gap-1.5 border-violet-500/30 bg-violet-500/10 font-medium text-violet-600 hover:bg-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/20 active:scale-98 transition-all"
                 aria-label="AI classify the phrase"
               >
                 {classify.isPending ? (
-                  <Sparkles className="size-4 animate-pulse" aria-hidden />
+                  <Sparkles className="size-4 animate-spin text-violet-500" aria-hidden />
                 ) : (
                   <Brain className="size-4" aria-hidden />
                 )}
@@ -384,7 +384,7 @@ export function StopRuleSimulator() {
               <Button
                 type="submit"
                 disabled={submit.isPending}
-                className="gap-1.5 bg-rose-600 text-white hover:bg-rose-600/90 sm:w-auto"
+                className="gap-1.5 bg-rose-600 font-medium text-white shadow-xs hover:bg-rose-500 active:scale-98 sm:w-auto transition-all"
               >
                 {submit.isPending ? (
                   <ShieldAlert className="size-4 animate-pulse" aria-hidden />
@@ -395,14 +395,14 @@ export function StopRuleSimulator() {
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">Quick:</span>
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mr-1">Quick test:</span>
             {SAMPLE_PHRASES.slice(0, 7).map((s) => (
               <button
                 key={s.phrase}
                 type="button"
                 onClick={() => pickSample(s)}
-                className="rounded-full border bg-background px-2.5 py-0.5 text-[11px] transition-colors hover:bg-accent"
+                className="rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-xs text-muted-foreground transition-all duration-150 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-foreground active:scale-95"
               >
                 {s.phrase}
               </button>

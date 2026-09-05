@@ -78,20 +78,30 @@ function KpiCard({
 }) {
   const accentText =
     accent === "emerald"
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-emerald-500 dark:text-emerald-400"
       : accent === "amber"
-        ? "text-amber-600 dark:text-amber-400"
+        ? "text-amber-500 dark:text-amber-400"
         : accent === "rose"
-          ? "text-rose-600 dark:text-rose-400"
-          : "text-foreground";
-  const accentBg =
+          ? "text-rose-500 dark:text-rose-400"
+          : "text-primary";
+
+  const accentIconBg =
     accent === "emerald"
-      ? "bg-emerald-500/10 dark:bg-emerald-500/15"
+      ? "bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 shadow-xs shadow-emerald-500/10"
       : accent === "amber"
-        ? "bg-amber-500/10 dark:bg-amber-500/15"
+        ? "bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 text-amber-500 dark:text-amber-400 shadow-xs shadow-amber-500/10"
         : accent === "rose"
-          ? "bg-rose-500/10 dark:bg-rose-500/15"
-          : "bg-muted";
+          ? "bg-gradient-to-br from-rose-500/20 to-pink-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 shadow-xs shadow-rose-500/10"
+          : "bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 text-foreground";
+
+  const topBarGrad =
+    accent === "emerald"
+      ? "from-emerald-500 via-teal-400 to-transparent"
+      : accent === "amber"
+        ? "from-amber-500 via-yellow-400 to-transparent"
+        : accent === "rose"
+          ? "from-rose-500 via-pink-400 to-transparent"
+          : "from-primary/50 via-primary/20 to-transparent";
 
   return (
     <motion.div
@@ -101,28 +111,29 @@ function KpiCard({
       whileHover={{ y: -3 }}
       className="h-full"
     >
-      <Card className="group relative h-full overflow-hidden transition-shadow duration-300 hover:shadow-lg">
-        {/* accent gradient sheen on hover */}
+      <Card className="group relative h-full overflow-hidden transition-all duration-300">
+        {/* Permanent subtle accent line at top */}
         <div
-          className={`pointer-events-none absolute inset-x-0 -top-px h-px opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${accent === "emerald" ? "bg-gradient-to-r from-transparent via-emerald-400 to-transparent" : accent === "amber" ? "bg-gradient-to-r from-transparent via-amber-400 to-transparent" : accent === "rose" ? "bg-gradient-to-r from-transparent via-rose-400 to-transparent" : "bg-gradient-to-r from-transparent via-foreground/30 to-transparent"}`}
+          className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${topBarGrad}`}
           aria-hidden
         />
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 pt-5">
           <div className="flex items-center justify-between">
-            <CardDescription className="text-xs">{label}</CardDescription>
+            <CardDescription className="text-xs font-medium tracking-wide uppercase text-muted-foreground/90">
+              {label}
+            </CardDescription>
             <span
-              className={`grid size-7 place-items-center rounded-lg ${accentBg} ${accentText} ${glow ? "glow-emerald" : ""}`}
-              style={glow ? { color: "var(--chart-2)" } : undefined}
+              className={`grid size-8 place-items-center rounded-lg ${accentIconBg} transition-transform duration-200 group-hover:scale-105`}
             >
-              <Icon className="size-3.5" aria-hidden />
+              <Icon className="size-4" aria-hidden />
             </span>
           </div>
-          <CardTitle className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <CardTitle className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
             {value}
           </CardTitle>
         </CardHeader>
         {sub && (
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 pb-4">
             <div className="text-xs text-muted-foreground">{sub}</div>
           </CardContent>
         )}
@@ -239,44 +250,45 @@ export function OverviewKPIs() {
           whileHover={{ y: -3 }}
           className="h-full"
         >
-          <Card className="group relative h-full overflow-hidden transition-shadow duration-300 hover:shadow-lg">
+          <Card className="group relative h-full overflow-hidden transition-all duration-300">
             <div
-              className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent"
               aria-hidden
             />
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 pt-5">
               <div className="flex items-center justify-between">
-                <CardDescription className="text-xs">
+                <CardDescription className="text-xs font-medium tracking-wide uppercase text-muted-foreground/90">
                   Batch Status
                 </CardDescription>
-                <span className="grid size-7 place-items-center rounded-lg bg-muted text-foreground">
-                  <Activity className="size-3.5" aria-hidden />
+                <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-muted to-muted/50 border border-border text-foreground transition-transform duration-200 group-hover:scale-105">
+                  <Activity className="size-4" aria-hidden />
                 </span>
               </div>
-              <div className="flex items-center gap-2 pt-1">
-                <Badge variant="outline" className={statusVariant[batch.status]}>
+              <div className="flex items-center gap-2 pt-1.5">
+                <Badge variant="outline" className={`px-2.5 py-0.5 text-xs font-semibold ${statusVariant[batch.status]}`}>
                   {isRunning && (
                     <span
-                      className="mr-1 inline-block size-1.5 rounded-full bg-emerald-500 glow-emerald"
-                      style={{ color: "var(--chart-2)" }}
+                      className="mr-1.5 inline-block size-2 rounded-full bg-emerald-500 animate-pulse shadow-xs shadow-emerald-500/50"
                       aria-hidden
                     />
                   )}
                   {batch.status}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   {batch.mandateLevel} mandate
                 </span>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-1 pb-4">
               <div className="text-xs text-muted-foreground">
                 Started{" "}
-                {new Date(batch.startedAt).toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
+                <span className="font-medium text-foreground">
+                  {new Date(batch.startedAt).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
             </CardContent>
           </Card>

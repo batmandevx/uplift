@@ -69,21 +69,26 @@ export default function Home() {
         role="main"
       >
         {/* Hero title */}
-        <Reveal className="mb-5">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Compliant Collections{" "}
-            <span className="bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 bg-clip-text text-transparent">
-              Command Center
-            </span>
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pre-registered holdout · Mandate-gated escalation · Hinglish stop
-            rules — measured, audited, and sealed.
-          </p>
+        <Reveal className="mb-6">
+          <div className="flex flex-col gap-1.5">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-500">
+              <span className="inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Real-time Recovery Operations & Compliance Engine
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl text-foreground">
+              Compliant Collections{" "}
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+                Command Center
+              </span>
+            </h1>
+            <p className="max-w-3xl text-sm text-muted-foreground/90 leading-relaxed">
+              Pre-registered holdout · Mandate-gated escalation · Hinglish stop rules — measured, audited, and sealed with causal rigor.
+            </p>
+          </div>
         </Reveal>
 
         {/* Pillar banner */}
-        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
           <Reveal delay={0}>
             <PillarBanner
               index={1}
@@ -111,41 +116,43 @@ export default function Home() {
         </div>
 
         {/* Live compliance-gate status banner */}
-        <Reveal className="mb-6" delay={0.1}>
+        <Reveal className="mb-8" delay={0.1}>
           <ComplianceGateBanner batchId={batchId} />
         </Reveal>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           {/* Left main column: Pillar 1 + Pillar 3 */}
-          <div className="space-y-4 lg:col-span-2 lg:space-y-6">
+          <div className="space-y-6 lg:col-span-2 lg:space-y-8">
             <section aria-label="Pillar 1 — Measured money recovered">
-              <div className="mb-3 flex items-center gap-2">
+              <div className="mb-3.5 flex items-center gap-2.5">
                 <PillarTag index={1} tone="emerald" />
-                <h2 className="text-sm font-semibold tracking-tight">
+                <h2 className="text-sm font-bold tracking-tight text-foreground">
                   Measured money recovered across the batch
                 </h2>
               </div>
               <OverviewKPIs />
-              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+              <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
                 <HoldoutComparisonChart batchId={batchId} />
                 <RecoveryDistributionChart batchId={batchId} />
               </div>
-              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+              <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
                 <MetaValidationPanel />
                 <RecoveryTrendCard batchId={batchId} />
               </div>
-              <div className="mt-4">
+              <div className="mt-5">
                 <MethodologyCard batchId={batchId} />
               </div>
             </section>
 
+            <div className="section-divider my-6" />
+
             <section
               aria-label="Pillar 3 — Stopping rules"
-              className="space-y-4 lg:space-y-6"
+              className="space-y-5"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <PillarTag index={3} tone="rose" />
-                <h2 className="text-sm font-semibold tracking-tight">
+                <h2 className="text-sm font-bold tracking-tight text-foreground">
                   Stopping rules — live demo (Hinglish first-class)
                 </h2>
               </div>
@@ -156,12 +163,12 @@ export default function Home() {
 
           {/* Right rail: Pillar 2 */}
           <aside
-            className="space-y-4 lg:col-span-1 lg:space-y-6"
+            className="space-y-6 lg:col-span-1"
             aria-label="Pillar 2 — Compliant escalation rail"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <PillarTag index={2} tone="amber" />
-              <h2 className="text-sm font-semibold tracking-tight">
+              <h2 className="text-sm font-bold tracking-tight text-foreground">
                 Compliant escalation
               </h2>
             </div>
@@ -171,29 +178,43 @@ export default function Home() {
           </aside>
         </div>
 
+        <div className="section-divider my-8" />
+
         {/* Full-width cross-cutting: per-debtor drill-down */}
         <section
           aria-label="Debtor registry and drill-down"
-          className="mt-4 lg:mt-6"
+          className="mt-6"
         >
-          <DebtorDrilldown batchId={batchId} />
+          <Reveal>
+            <DebtorDrilldown batchId={batchId} />
+          </Reveal>
         </section>
+
+        <div className="section-divider my-8" />
 
         {/* Full-width cross-cutting: batch comparison + audit timeline */}
         <section
           aria-label="Batch comparison and audit timeline"
-          className="mt-4 grid grid-cols-1 gap-4 lg:mt-6 lg:grid-cols-2 lg:gap-6"
+          className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
         >
-          <BatchComparisonChart />
-          <BatchScatterPlot />
+          <Reveal delay={0.05}>
+            <BatchComparisonChart />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <BatchScatterPlot />
+          </Reveal>
         </section>
+
+        <div className="section-divider my-8" />
 
         {/* Full-width: audit timeline */}
         <section
           aria-label="Audit timeline"
-          className="mt-4 lg:mt-6"
+          className="mt-6"
         >
-          <AuditTimeline />
+          <Reveal delay={0.1}>
+            <AuditTimeline />
+          </Reveal>
         </section>
       </main>
 
@@ -218,16 +239,22 @@ function PillarBanner({
 }) {
   const ring =
     tone === "emerald"
-      ? "border-emerald-300/40 bg-emerald-50/50 dark:bg-emerald-950/20"
+      ? "border-emerald-500/25 bg-emerald-500/5 hover:border-emerald-500/40"
       : tone === "amber"
-        ? "border-amber-300/40 bg-amber-50/50 dark:bg-amber-950/20"
-        : "border-rose-300/40 bg-rose-50/50 dark:bg-rose-950/20";
+        ? "border-amber-500/25 bg-amber-500/5 hover:border-amber-500/40"
+        : "border-rose-500/25 bg-rose-500/5 hover:border-rose-500/40";
   const grad =
     tone === "emerald"
-      ? "from-emerald-500 to-teal-500"
+      ? "from-emerald-500 via-teal-400 to-transparent"
       : tone === "amber"
-        ? "from-amber-500 to-orange-500"
-        : "from-rose-500 to-pink-500";
+        ? "from-amber-500 via-orange-400 to-transparent"
+        : "from-rose-500 via-pink-400 to-transparent";
+  const badgeBg =
+    tone === "emerald"
+      ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs shadow-emerald-500/30"
+      : tone === "amber"
+        ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xs shadow-amber-500/30"
+        : "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-xs shadow-rose-500/30";
   const dot =
     tone === "emerald" ? "bg-emerald-500" : tone === "amber" ? "bg-amber-500" : "bg-rose-500";
   const glowCls =
@@ -236,30 +263,31 @@ function PillarBanner({
       : tone === "amber"
         ? "glow-amber"
         : "glow-rose";
+
   return (
     <div
-      className={`group relative h-full overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${ring}`}
+      className={`glass group relative h-full overflow-hidden rounded-xl border p-4.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${ring}`}
     >
       {/* top sheen */}
       <div
-        className={`pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r ${grad} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+        className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${grad} opacity-75 transition-opacity duration-300 group-hover:opacity-100`}
         aria-hidden
       />
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <span
-          className={`grid size-7 place-items-center rounded-lg bg-gradient-to-br ${grad} text-xs font-bold text-white shadow-sm`}
+          className={`grid size-7 place-items-center rounded-lg ${badgeBg} text-xs font-bold shadow-xs`}
           aria-hidden
         >
           {index}
         </span>
-        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-sm font-bold tracking-tight text-foreground">{title}</h3>
         <span
-          className={`ml-auto size-1.5 rounded-full ${dot} ${glowCls} opacity-70 transition-opacity group-hover:opacity-100`}
+          className={`ml-auto size-2 rounded-full ${dot} ${glowCls} opacity-80 transition-opacity group-hover:opacity-100 animate-pulse`}
           style={{ color: "currentColor" }}
           aria-hidden
         />
       </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">{description}</p>
+      <p className="mt-2 text-xs text-muted-foreground/90 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -273,13 +301,13 @@ function PillarTag({
 }) {
   const cls =
     tone === "emerald"
-      ? "bg-emerald-600 text-white"
+      ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs shadow-emerald-500/20"
       : tone === "amber"
-        ? "bg-amber-600 text-white"
-        : "bg-rose-600 text-white";
+        ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xs shadow-amber-500/20"
+        : "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-xs shadow-rose-500/20";
   return (
     <span
-      className={`grid size-5 place-items-center rounded text-[10px] font-bold ${cls}`}
+      className={`grid size-5.5 place-items-center rounded-md text-[11px] font-bold ${cls}`}
       aria-hidden
     >
       {index}

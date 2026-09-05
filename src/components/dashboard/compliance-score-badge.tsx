@@ -29,8 +29,8 @@ function scoreTone(score: number): {
 } {
   if (score >= 85) {
     return {
-      ring: "border-emerald-300/50 bg-emerald-100/70 dark:bg-emerald-950/60",
-      text: "text-emerald-700 dark:text-emerald-300",
+      ring: "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-500/15 shadow-xs shadow-emerald-500/10",
+      text: "text-emerald-600 dark:text-emerald-400",
       bar: "bg-emerald-500",
       label: "Healthy",
       Icon: ShieldCheck,
@@ -38,16 +38,16 @@ function scoreTone(score: number): {
   }
   if (score >= 60) {
     return {
-      ring: "border-amber-300/50 bg-amber-100/70 dark:bg-amber-950/60",
-      text: "text-amber-700 dark:text-amber-300",
+      ring: "border-amber-500/40 bg-amber-500/10 dark:bg-amber-500/15 shadow-xs shadow-amber-500/10",
+      text: "text-amber-600 dark:text-amber-400",
       bar: "bg-amber-500",
       label: "Watch",
       Icon: Gauge,
     };
   }
   return {
-    ring: "border-rose-300/50 bg-rose-100/70 dark:bg-rose-950/60",
-    text: "text-rose-700 dark:text-rose-300",
+    ring: "border-rose-500/40 bg-rose-500/10 dark:bg-rose-500/15 shadow-xs shadow-rose-500/10",
+    text: "text-rose-600 dark:text-rose-400",
     bar: "bg-rose-500",
     label: "Blocked",
     Icon: ShieldAlert,

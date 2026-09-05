@@ -116,41 +116,41 @@ export function EscalationGateQueue() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 24 }}
                   transition={{ duration: 0.25 }}
-                  className="rounded-lg border bg-card/60 p-3"
+                  className="rounded-lg border border-border/60 bg-card/50 p-3.5 transition-all duration-200 hover:border-border hover:bg-card/80"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-medium">
+                        <span className="font-mono text-xs font-semibold text-foreground">
                           {g.debtorToken}
                         </span>
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
                           PENDING
                         </Badge>
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-                        <span className="rounded bg-muted px-1.5 py-0.5">
+                        <span className="rounded-md border border-border/50 bg-muted/60 px-2 py-0.5 font-medium">
                           Rung {g.fromLevel} · {rungLabel(g.fromLevel)}
                         </span>
                         <ArrowRight className="size-3 text-muted-foreground" aria-hidden />
-                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                        <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-600 dark:text-amber-300">
                           Rung {g.toLevel} · {rungLabel(g.toLevel)}
                         </span>
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
+                      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
                         {g.rationale}
                       </p>
-                      <p className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <Clock className="size-3" aria-hidden />
                         Requested {formatDateTime(g.requestedAt)}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-3.5 flex items-center gap-2 pt-2 border-t border-border/40">
                     <Button
                       size="sm"
                       variant="default"
-                      className="h-8 gap-1 bg-emerald-600 text-white hover:bg-emerald-600/90"
+                      className="h-8 gap-1.5 bg-emerald-600 font-medium text-white shadow-xs hover:bg-emerald-500 active:scale-98 transition-all"
                       onClick={() => onApprove(g.id, g.debtorToken)}
                       disabled={approve.isPending || reject.isPending}
                       aria-label={`Approve escalation for ${g.debtorToken}`}
@@ -160,7 +160,7 @@ export function EscalationGateQueue() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 gap-1 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                      className="h-8 gap-1.5 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 hover:text-rose-500 active:scale-98 transition-all"
                       onClick={() => onReject(g.id, g.debtorToken)}
                       disabled={approve.isPending || reject.isPending}
                       aria-label={`Reject escalation for ${g.debtorToken}`}

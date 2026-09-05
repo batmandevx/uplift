@@ -34,33 +34,33 @@ function ChartTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!row) return null;
   const positive = row.incrementalRupees >= 0;
   return (
-    <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
-      <div className="mb-1 font-medium">{row.batchName}</div>
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <span>{row.status}</span>
+    <div className="glass rounded-lg border border-border/60 bg-popover/95 p-3 text-xs shadow-xl backdrop-blur-md">
+      <div className="mb-1 font-bold text-foreground">{row.batchName}</div>
+      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <span className="font-medium text-foreground">{row.status}</span>
         <span>·</span>
         <span>{row.mandateLevel}</span>
       </div>
-      <div className="mt-1.5 space-y-0.5">
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">Treated mean</span>
-          <span className="font-medium tabular-nums text-foreground">
+      <div className="mt-2 space-y-1">
+        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+          <span>Treated mean:</span>
+          <span className="font-semibold tabular-nums text-foreground">
             {formatINR(row.treatedMean, { compact: true })}
           </span>
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">Holdout mean</span>
-          <span className="font-medium tabular-nums text-foreground">
+        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+          <span>Holdout mean:</span>
+          <span className="font-semibold tabular-nums text-foreground">
             {formatINR(row.holdoutMean, { compact: true })}
           </span>
         </div>
-        <div className="flex items-center justify-between gap-4 border-t pt-1">
-          <span className="text-muted-foreground">Incremental</span>
+        <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-1 mt-1">
+          <span className="text-muted-foreground">Incremental:</span>
           <span
-            className={`font-semibold tabular-nums ${
+            className={`font-bold tabular-nums ${
               positive
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-rose-600 dark:text-rose-400"
+                ? "text-emerald-500 dark:text-emerald-400"
+                : "text-rose-500 dark:text-rose-400"
             }`}
           >
             {positive ? "+" : "−"}
@@ -68,12 +68,12 @@ function ChartTooltip({ active, payload }: TooltipProps<number, string>) {
           </span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="text-muted-foreground">Lift</span>
+          <span className="text-muted-foreground">Lift:</span>
           <span
-            className={`font-medium tabular-nums ${
+            className={`font-semibold tabular-nums ${
               positive
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-rose-600 dark:text-rose-400"
+                ? "text-emerald-500 dark:text-emerald-400"
+                : "text-rose-500 dark:text-rose-400"
             }`}
           >
             {positive ? "▲" : "▼"} {Math.abs(row.liftPct).toFixed(1)}%
