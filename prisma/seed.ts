@@ -49,6 +49,7 @@ async function main() {
   console.log('Seeding compliant debt-recovery demo data...')
 
   // Clean slate
+  await db.complianceGateSnapshot.deleteMany()
   await db.auditEvent.deleteMany()
   await db.stopRuleEvent.deleteMany()
   await db.escalationGate.deleteMany()
@@ -280,10 +281,53 @@ async function main() {
     })),
   })
 
+  // --- Compliance-gate history: 24 hourly snapshots for batch 1 ---
+  // Quiet-hours gate flips: blocking 21:00–08:00 IST, passing 08:00–21:00.
+  // Human-approval gate: pending count fluctuates between 4 and 9.
+  const GATE_KEYS = ['quiet-hours', 'human-approval', 'opt-out-registry', 'daily-cap', 'total-cap', 'batch-lifecycle']
+  const snapshots: { batchId: string; gateKey: string; state: string; detail: string; at: Date }[] = []
+  for (let h = 23; h >= 0; h--) {
+    const at = new Date(Date.now() - h * 60 * 60 * 1000)
+    // IST hour for this snapshot
+    const istHour = (at.getUTCHours() + 5 + Math.floor((at.getUTCMinutes() + 30) / 60)) % 24
+    const quietBlocking = istHour >= 21 || istHour < 8
+    for (const key of GATE_KEYS) {
+      let state = 'passing'
+      let detail = ''
+      if (key === 'quiet-hours') {
+        state = quietBlocking ? 'blocking' : 'passing'
+        detail = quietBlocking ? 'Outreach suppressed (21:00–08:00 IST)' : 'Outreach allowed'
+      } else if (key === 'human-approval') {
+        // Fluctuating pending count
+        const pending = 4 + Math.floor(rand(h + 1) * 6)
+        state = pending > 0 ? 'pending' : 'passing'
+        detail = `${pending} escalations pending`
+      } else if (key === 'opt-out-registry') {
+        const count = 6 + Math.floor(rand(h + 50) * 4)
+        state = count > 0 ? 'active' : 'passing'
+        detail = `${count} debtors opted-out`
+      } else if (key === 'daily-cap') {
+        const count = Math.floor(rand(h + 100) * 3)
+        state = count > 0 ? 'active' : 'passing'
+        detail = `${count} debtors at daily cap`
+      } else if (key === 'total-cap') {
+        const count = Math.floor(rand(h + 200) * 2)
+        state = count > 0 ? 'active' : 'passing'
+        detail = `${count} debtors at total cap`
+      } else if (key === 'batch-lifecycle') {
+        state = 'passing'
+        detail = 'Batch RUNNING'
+      }
+      snapshots.push({ batchId: batch1.id, gateKey: key, state, detail, at })
+    }
+  }
+  await db.complianceGateSnapshot.createMany({ data: snapshots })
+
   console.log('Seed complete.')
   console.log(`  Batch 1 (${batch1.id}): ${allDebtors.length} debtors, ${allDebtors.filter(d => d.isHoldout).length} holdout — RUNNING`)
   console.log(`  Batch 2 (${batch2.id}): ${sealedRecovered.length} sealed debtors`)
   console.log(`  Batch 3 (${batch3.id}): 50 sealed debtors (ENHANCED mandate)`)
+  console.log(`  Compliance snapshots: ${snapshots.length} (24h × ${GATE_KEYS.length} gates)`)
 }
 
 main()

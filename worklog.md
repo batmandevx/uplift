@@ -278,3 +278,55 @@ Unresolved issues / risks / next-phase priorities:
 - Consider adding a methodology "tamper simulation" toggle that deliberately mutates the plan text client-side to demonstrate the hash mismatch path.
 - Consider a compliance-gate history sparkline showing when gates flipped state over the last 24h.
 - Batch scatter: add quadrant labels (top-right = "high lift + high volume = best", bottom-left = "low impact").
+
+---
+Task ID: 5 (webDevReview round 5)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0-4). Project had 20 API routes, 3 batches, methodology hash verification, compliance-gate banner, batch scatter plot, debtor drawer write actions, LLM fuzzy classify, audit timeline, etc.
+- QA: Re-seeded for clean data. Fresh browser session: zero console errors/warnings. All existing features render. Lint clean. dev.log clean. No bugs to fix.
+
+- Added 3 new features + 1 new API route + 1 new Prisma model + 2 new components:
+
+  1. Methodology tamper-simulation toggle (demos the hash-mismatch path):
+     - Extended MethodologyCard: added a "Tamper simulation" Switch (with FlaskRound icon). When ON, the analysis plan text is amended client-side with "[POST-HOC AMENDMENT: switch to per-arm median.]" — the plan box turns rose with an "amended" badge and the amendment text appears (animated). The verify-hash logic now uses the amended plan text, so recomputing produces a different hash → "Mismatch — possible tampering" status + "Hash mismatch detected" toast (with a tamper-aware description). Toggling resets the verify state. Added Bug + FlaskRound icons + Switch component import.
+     - Verified interactively via agent-browser: toggle ON → "AMENDED" badge + amendment text + "Tamper simulation ON" toast → click "Verify hash" → "Mismatch — possible tampering" + "Recomputed:" hash + "Hash mismatch detected" toast. The full tamper-evidence flow (mutate → recompute → detect) is now demoable.
+
+  2. Batch scatter quadrant labels:
+     - Extended BatchScatterPlot: computes median incremental (X) + median lift (Y) thresholds, adds two dashed ReferenceLine dividers at the medians, plus quadrant labels — "★ Best" (top-right, high lift + high volume, chart-2/emerald) and "Low impact" (bottom-left, muted). Imports ReferenceLine + Label from recharts.
+     - Verified: "★ Best" and "Low impact" labels render in the snapshot.
+
+  3. Compliance-gate history sparkline (24h gate-flip timeline):
+     - New Prisma model ComplianceGateSnapshot (id, batchId, gateKey, state, detail, at) with indexes on [batchId, gateKey, at] and [at]. Ran db:push.
+     - Seed enhancement: generates 24 hourly snapshots × 6 gates = 144 records per re-seed. Quiet-hours gate flips blocking/passing based on the IST hour of each snapshot; human-approval pending count fluctuates 4-9; opt-out-registry 6-9; daily-cap 0-2; total-cap 0-1; batch-lifecycle always passing. Added complianceGateSnapshot.deleteMany() to the clean-slate block.
+     - New endpoint GET /api/compliance-gates/history?batchId=&hours=24 — returns per-gate arrays of {at, state} points ordered oldest→newest.
+     - New component GateHistorySparkline (gate-history-sparkline.tsx): a tiny 28px-tall recharts stepAfter LineChart showing 24h of gate-state flips. State→value mapping (passing=0, active=1, pending=2, blocking=3). Color reflects the latest state (blocking=chart-5/rose, pending=chart-4/amber, active=muted, passing=chart-2/emerald). Custom tooltip shows IST time + state.
+     - Integrated into ComplianceGateBanner: each gate chip now includes the sparkline between the label and the status dot. The banner now shows both the live state AND the 24h flip history at a glance.
+     - Verified via curl: /api/compliance-gates/history returns 24 points per gate. SSR renders 200.
+
+- Extended dashboard-types.ts with GateHistoryPoint, GateHistoryResponse. Extended queries.ts with useGateHistory (refetchInterval 5min).
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200. New features present: "Tamper simulation" (switch), "★ Best" + "Low impact" (scatter quadrants), "Incremental vs Lift". No error markers.
+- Console: fresh browser session → zero errors/warnings.
+- API: /api/compliance-gates/history returns 24h × 6 gates of state points.
+- agent-browser interactive: tamper toggle ON → "AMENDED" + amendment text → verify → "Mismatch — possible tampering" + "Hash mismatch detected" toast. Scatter quadrant labels visible. Gate sparklines render in the banner.
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-6 features complete: methodology tamper-simulation toggle (demos the full mutate→recompute→detect mismatch flow interactively), batch scatter quadrant labels (★ Best / Low impact with median dividers), compliance-gate 24h history sparkline (new Prisma model + seed + API + stepAfter sparkline integrated into the banner).
+- 1 new API route added (total now 21). 1 new Prisma model (ComplianceGateSnapshot). 2 new components (gate-history-sparkline; methodology-card + batch-scatter-plot + compliance-gate-banner extended). Seed enhanced with 144 gate snapshots.
+- Lint clean. All endpoints verified. Page renders 200 with zero console errors.
+- The tamper-evidence demo is now complete: operators can toggle the tamper simulation, verify the hash, and see the mismatch detected in real time — proving the methodology hash catches post-hoc plan mutations.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue.
+- NextAuth RBAC: write actions still stamp "operator@console". Next phase: add NextAuth with agent roles + real approver identity.
+- Socket.io live push: all feeds still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time stop-events / gate decisions / audit timeline updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio → pipe through detectStopPhrase + LLM classify for real-time stop detection.
+- Gate-history: record real snapshots periodically (currently only seeded at seed time). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
+- Consider a "methodology diff" view that shows exactly which plan field changed when tamper is detected.
+- Batch scatter: add a 4th quadrant label ("High lift, low volume — niche") for the top-left quadrant.

@@ -160,3 +160,17 @@ model AuditEvent {
   @@index([batchId])
   @@index([debtorId])
 }
+
+// Periodic snapshots of compliance-gate states — used for the 24h history
+// sparkline in the compliance-gate banner.
+model ComplianceGateSnapshot {
+  id          String   @id @default(cuid())
+  batchId     String
+  gateKey     String   // e.g. "quiet-hours"
+  state       String   // passing | blocking | pending | active
+  detail      String?
+  at          DateTime @default(now())
+
+  @@index([batchId, gateKey, at])
+  @@index([at])
+}

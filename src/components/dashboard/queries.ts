@@ -26,6 +26,7 @@ import type {
   RecordAttemptResponse,
   ManualOptOutResponse,
   ComplianceGatesResponse,
+  GateHistoryResponse,
 } from "@/lib/dashboard-types";
 
 async function jfetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -344,5 +345,17 @@ export function useComplianceGates(batchId?: string) {
         `/api/compliance-gates?batchId=${encodeURIComponent(batchId!)}`,
       ),
     refetchInterval: 60_000,
+  });
+}
+
+export function useGateHistory(batchId?: string, hours = 24) {
+  return useQuery<GateHistoryResponse>({
+    queryKey: ["gate-history", batchId, hours],
+    enabled: !!batchId,
+    queryFn: () =>
+      jfetch<GateHistoryResponse>(
+        `/api/compliance-gates/history?batchId=${encodeURIComponent(batchId!)}&hours=${hours}`,
+      ),
+    refetchInterval: 5 * 60_000,
   });
 }

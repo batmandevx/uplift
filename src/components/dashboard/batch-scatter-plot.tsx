@@ -2,6 +2,8 @@
 
 import {
   CartesianGrid,
+  ReferenceLine,
+  Label,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -91,6 +93,14 @@ export function BatchScatterPlot() {
     shortName: d.batchName.replace(/Q[234]-\d{4}-NPL-/, "").replace(/-Cohort-/, ""),
   }));
 
+  // Quadrant thresholds: median incremental + median lift
+  const xMedian = chartData.length
+    ? [...chartData].map((d) => d.incrementalRupees).sort((a, b) => a - b)[Math.floor(chartData.length / 2)]
+    : 0;
+  const yMedian = chartData.length
+    ? [...chartData].map((d) => d.liftPct).sort((a, b) => a - b)[Math.floor(chartData.length / 2)]
+    : 0;
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -132,6 +142,41 @@ export function BatchScatterPlot() {
                 margin={{ top: 16, right: 24, left: 8, bottom: 8 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
+                {/* Quadrant dividers (median lines) */}
+                <ReferenceLine
+                  x={xMedian}
+                  stroke="var(--border)"
+                  strokeDasharray="4 4"
+                  strokeWidth={1}
+                />
+                <ReferenceLine
+                  y={yMedian}
+                  stroke="var(--border)"
+                  strokeDasharray="4 4"
+                  strokeWidth={1}
+                />
+                {/* Quadrant labels */}
+                <ReferenceLine
+                  y={yMedian}
+                  stroke="transparent"
+                  label={{
+                    value: "★ Best",
+                    position: "insideTopRight",
+                    fill: "var(--chart-2)",
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
+                />
+                <ReferenceLine
+                  y={yMedian}
+                  stroke="transparent"
+                  label={{
+                    value: "Low impact",
+                    position: "insideBottomLeft",
+                    fill: "var(--muted-foreground)",
+                    fontSize: 9,
+                  }}
+                />
                 <XAxis
                   type="number"
                   dataKey="incrementalRupees"

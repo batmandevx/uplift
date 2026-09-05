@@ -339,3 +339,13 @@ export interface ComplianceGatesResponse {
     passing: number;
   };
 }
+
+export interface GateHistoryPoint {
+  at: string;
+  state: GateState;
+}
+
+export interface GateHistoryResponse {
+  hours: number;
+  gates: { gateKey: string; points: GateHistoryPoint[] }[];
+}

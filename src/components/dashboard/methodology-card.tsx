@@ -15,6 +15,8 @@ import {
   Loader2,
   Copy,
   CheckCheck,
+  Bug,
+  FlaskRound,
 } from "lucide-react";
 import {
   Card,
@@ -26,6 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { QueryError } from "./query-error";
 import { useMethodology } from "./queries";
@@ -70,17 +73,27 @@ export function MethodologyCard({ batchId }: { batchId?: string }) {
   const [verify, setVerify] = React.useState<VerifyState>("idle");
   const [recomputed, setRecomputed] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
+  const [tampered, setTampered] = React.useState(false);
+
+  // The plan text used for re-computation. When "tampered" is on, we append a
+  // subtle mutation so the recomputed hash diverges from the stored value —
+  // demonstrating the mismatch path without touching the database.
+  const effectivePlan = React.useMemo(() => {
+    if (!data) return "";
+    return tampered
+      ? data.analysisPlan + " [POST-HOC AMENDMENT: switch to per-arm median.]"
+      : data.analysisPlan;
+  }, [data, tampered]);
 
   function handleVerify() {
     if (!data) return;
     setVerify("verifying");
-    // Simulate a brief computation delay for UX feedback
     setTimeout(() => {
       const hash = computeMethodologyHash({
         batchName: data.batchName,
         mandateLevel: data.mandateLevel,
         holdoutRatio: data.holdoutRatio,
-        analysisPlan: data.analysisPlan,
+        analysisPlan: effectivePlan,
       });
       setRecomputed(hash);
       const match = hash === data.methodologyHash;
@@ -90,11 +103,24 @@ export function MethodologyCard({ batchId }: { batchId?: string }) {
           description: "Recomputed hash matches the stored value. Plan is intact.",
         });
       } else {
-        toast.error("Hash mismatch", {
-          description: "The stored hash does not match the recomputed value. Plan may have been tampered with.",
+        toast.error("Hash mismatch detected", {
+          description: tampered
+            ? "Tamper simulation is ON — the amended plan produces a different hash, exactly as a real mutation would."
+            : "The stored hash does not match the recomputed value. Plan may have been tampered with.",
         });
       }
     }, 600);
+  }
+
+  function handleTamperChange(v: boolean) {
+    setTampered(v);
+    setVerify("idle");
+    setRecomputed(null);
+    if (v) {
+      toast.info("Tamper simulation ON", {
+        description: "The plan text was amended client-side. Click 'Verify hash' to see the mismatch.",
+      });
+    }
   }
 
   function handleCopy() {
@@ -148,14 +174,68 @@ export function MethodologyCard({ batchId }: { batchId?: string }) {
             className="space-y-4"
           >
             {/* Analysis plan */}
-            <div className="rounded-lg border bg-muted/30 p-3">
+            <div
+              className={`rounded-lg border p-3 transition-colors ${
+                tampered
+                  ? "border-rose-300/50 bg-rose-50/40 dark:bg-rose-950/20"
+                  : "bg-muted/30"
+              }`}
+            >
               <div className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <ShieldCheck className="size-3" aria-hidden />
+                {tampered ? (
+                  <Bug className="size-3 text-rose-600 dark:text-rose-400" aria-hidden />
+                ) : (
+                  <ShieldCheck className="size-3" aria-hidden />
+                )}
                 Pre-registered analysis plan
+                {tampered && (
+                  <Badge
+                    variant="outline"
+                    className="ml-auto gap-1 border-rose-300/50 bg-rose-100/70 text-[9px] text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                  >
+                    <Bug className="size-2.5" aria-hidden />
+                    amended
+                  </Badge>
+                )}
               </div>
               <p className="text-xs leading-relaxed text-foreground">
                 {data.analysisPlan}
               </p>
+              <AnimatePresence>
+                {tampered && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-1.5 border-t border-rose-300/30 pt-1.5 text-xs italic text-rose-600 dark:text-rose-400"
+                  >
+                    [POST-HOC AMENDMENT: switch to per-arm median.]
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Tamper simulation toggle */}
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed bg-muted/20 p-2.5">
+              <div className="flex items-center gap-2">
+                <FlaskRound
+                  className={`size-3.5 ${tampered ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}
+                  aria-hidden
+                />
+                <div>
+                  <div className="text-[11px] font-medium">
+                    Tamper simulation
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    Amend the plan client-side to demo the hash-mismatch path.
+                  </div>
+                </div>
+              </div>
+              <Switch
+                checked={tampered}
+                onCheckedChange={handleTamperChange}
+                aria-label="Toggle tamper simulation"
+              />
             </div>
 
             {/* Methodology hash — the key "sealed" artifact + verify button */}

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QueryError } from "./query-error";
 import { useComplianceGates } from "./queries";
+import { GateHistorySparkline } from "./gate-history-sparkline";
 import type { GateState } from "@/lib/dashboard-types";
 
 const ICONS: Record<string, LucideIcon> = {
@@ -118,11 +119,16 @@ export function ComplianceGateBanner({ batchId }: { batchId?: string }) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.04 }}
-                className={`group relative flex items-center gap-1.5 rounded-lg border px-2 py-1 ${st.ring}`}
+                className={`group relative flex items-center gap-2 rounded-lg border px-2 py-1 ${st.ring}`}
                 title={g.detail}
               >
                 <Icon className={`size-3.5 ${st.text}`} aria-hidden />
                 <span className="text-[11px] font-medium">{g.label}</span>
+                <GateHistorySparkline
+                  batchId={batchId}
+                  gateKey={g.key}
+                  latestState={g.state}
+                />
                 <span
                   className={`size-1.5 rounded-full ${st.dot}`}
                   aria-hidden
