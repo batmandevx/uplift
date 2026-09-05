@@ -330,3 +330,45 @@ Unresolved issues / risks / next-phase priorities:
 - Gate-history: record real snapshots periodically (currently only seeded at seed time). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
 - Consider a "methodology diff" view that shows exactly which plan field changed when tamper is detected.
 - Batch scatter: add a 4th quadrant label ("High lift, low volume — niche") for the top-left quadrant.
+
+---
+Task ID: 6 (webDevReview round 6)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0-5). Project had 21 API routes, methodology tamper-simulation toggle, batch scatter with 2 quadrant labels, compliance-gate history sparkline, etc.
+- QA: Re-seeded for clean data. Fresh browser session: zero console errors/warnings. All existing features render. Lint clean. dev.log clean. No bugs to fix.
+
+- Added 2 new feature enhancements:
+
+  1. Methodology diff view (shows exactly which field changed when tamper is detected):
+     - Extended MethodologyCard: when the verify-hash result is "mismatch", a new "Methodology diff" panel animates open below the recomputed hash. The panel has a rose border + "METHODOLOGY DIFF" header (with Bug icon). It shows two side-by-side code blocks: "Stored plan" (emerald Check icon, original plan text) and "Amended plan" (rose Cross icon, the mutated text with the appended amendment). Below, an explanation with an ArrowRight icon states: "analysisPlan field mutated: appended '[POST-HOC AMENDMENT: switch to per-arm median.]'. This changes the hash input, invalidating the pre-registered fingerprint." This makes the tamper-evidence demo fully self-documenting — an operator can see exactly what changed and why the hash diverged.
+     - Added ArrowRight to the lucide-react imports.
+     - Verified interactively via agent-browser: toggle tamper ON → click "Verify hash" → "METHODOLOGY DIFF" panel appears with "Stored plan" (original) + "Amended plan" (with appended amendment) + the "analysisPlan field mutated... invalidating the pre-registered fingerprint" explanation.
+
+  2. 4th scatter quadrant label ("Niche — high lift, low volume"):
+     - Extended BatchScatterPlot: added a 3rd quadrant label in the top-left position ("Niche — high lift, low volume", chart-3/amber color, fontSize 9). The scatter now labels all 3 meaningful quadrants: top-right "★ Best" (high lift + high volume), top-left "Niche" (high lift, low volume), bottom-left "Low impact" (muted). The bottom-right (high volume, low lift) is intentionally unlabeled as it's uncommon.
+     - Verified: "★ Best", "Niche — high lift, low volume", and "Low impact" all render in the snapshot.
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200. New features present. No error markers.
+- Console: fresh browser session → zero errors/warnings.
+- agent-browser interactive: tamper toggle ON → verify → "METHODOLOGY DIFF" panel with "Stored plan" + "Amended plan" + mutation explanation. All 3 scatter quadrant labels visible.
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-7 features complete: methodology diff view (self-documenting tamper-evidence showing exactly which field changed + why the hash diverged), 4th scatter quadrant label ("Niche — high lift, low volume").
+- No new API routes or Prisma models (both are pure frontend enhancements of existing components).
+- Lint clean. All features verified. Page renders 200 with zero console errors.
+- The tamper-evidence demo is now fully self-documenting: toggle tamper → verify hash → see mismatch → read the diff showing exactly what was mutated and why the fingerprint changed.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue.
+- NextAuth RBAC: write actions still stamp "operator@console". Next phase: add NextAuth with agent roles + real approver identity.
+- Socket.io live push: all feeds still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time stop-events / gate decisions / audit timeline updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio → pipe through detectStopPhrase + LLM classify for real-time stop detection.
+- Gate-history: record real snapshots periodically (currently only seeded at seed time). Next phase: add a background job/cron that writes a ComplianceGateSnapshot every hour.
+- Consider a batch-level "compliance score" (0-100) summarizing all gate states into a single health metric.
+- Consider adding a keyboard shortcut (e.g. "S") to focus the stop-rule simulator input for faster demoing.

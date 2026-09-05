@@ -171,6 +171,16 @@ export function BatchScatterPlot() {
                   y={yMedian}
                   stroke="transparent"
                   label={{
+                    value: "Niche — high lift, low volume",
+                    position: "insideTopLeft",
+                    fill: "var(--chart-3)",
+                    fontSize: 9,
+                  }}
+                />
+                <ReferenceLine
+                  y={yMedian}
+                  stroke="transparent"
+                  label={{
                     value: "Low impact",
                     position: "insideBottomLeft",
                     fill: "var(--muted-foreground)",

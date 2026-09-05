@@ -17,6 +17,7 @@ import {
   CheckCheck,
   Bug,
   FlaskRound,
+  ArrowRight,
 } from "lucide-react";
 import {
   Card,
@@ -337,6 +338,54 @@ export function MethodologyCard({ batchId }: { batchId?: string }) {
                       <code className="font-mono font-semibold text-foreground">
                         {recomputed}
                       </code>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Methodology diff — shown only when a mismatch is detected */}
+              <AnimatePresence>
+                {verify === "mismatch" && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 rounded-md border border-rose-300/40 bg-rose-50/50 p-2.5 dark:bg-rose-950/30">
+                      <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+                        <Bug className="size-3" aria-hidden />
+                        Methodology diff
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="rounded bg-background/70 p-1.5 text-[10px]">
+                          <div className="mb-0.5 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                            <Check className="size-2.5" aria-hidden />
+                            <span className="font-medium">Stored plan</span>
+                          </div>
+                          <p className="line-clamp-2 font-mono text-[9px] text-muted-foreground">
+                            {data.analysisPlan}
+                          </p>
+                        </div>
+                        <div className="rounded bg-background/70 p-1.5 text-[10px]">
+                          <div className="mb-0.5 flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                            <Cross className="size-2.5" aria-hidden />
+                            <span className="font-medium">Amended plan</span>
+                          </div>
+                          <p className="line-clamp-2 font-mono text-[9px] text-muted-foreground">
+                            {effectivePlan}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-1.5 flex items-start gap-1 text-[9px] text-rose-600 dark:text-rose-400">
+                        <ArrowRight className="mt-0.5 size-2.5 shrink-0" aria-hidden />
+                        <span>
+                          <strong>analysisPlan</strong> field mutated: appended
+                          "<em>[POST-HOC AMENDMENT: switch to per-arm median.]</em>".
+                          This changes the hash input, invalidating the
+                          pre-registered fingerprint.
+                        </span>
+                      </div>
                     </div>
                   </motion.div>
                 )}
