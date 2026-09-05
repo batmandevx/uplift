@@ -13,6 +13,9 @@ import { ComplianceRulesPanel } from "@/components/dashboard/compliance-rules-pa
 import { StopRuleSimulator } from "@/components/dashboard/stop-rule-simulator";
 import { StopEventsFeed } from "@/components/dashboard/stop-events-feed";
 import { DebtorDrilldown } from "@/components/dashboard/debtor-drilldown";
+import { BatchComparisonChart } from "@/components/dashboard/batch-comparison-chart";
+import { RecoveryTrendCard } from "@/components/dashboard/recovery-trend-card";
+import { AuditTimeline } from "@/components/dashboard/audit-timeline";
 import { useOverview } from "@/components/dashboard/queries";
 
 export default function Home() {
@@ -92,8 +95,9 @@ export default function Home() {
                 <HoldoutComparisonChart batchId={batchId} />
                 <RecoveryDistributionChart batchId={batchId} />
               </div>
-              <div className="mt-4">
+              <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
                 <MetaValidationPanel />
+                <RecoveryTrendCard batchId={batchId} />
               </div>
             </section>
 
@@ -135,6 +139,15 @@ export default function Home() {
           className="mt-4 lg:mt-6"
         >
           <DebtorDrilldown batchId={batchId} />
+        </section>
+
+        {/* Full-width cross-cutting: batch comparison + audit timeline */}
+        <section
+          aria-label="Batch comparison and audit timeline"
+          className="mt-4 grid grid-cols-1 gap-4 lg:mt-6 lg:grid-cols-2 lg:gap-6"
+        >
+          <BatchComparisonChart />
+          <AuditTimeline />
         </section>
       </main>
 

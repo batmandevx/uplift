@@ -117,3 +117,63 @@ Unresolved issues / risks / next-phase priorities:
 - Debtor drill-down: add a "record a new attempt" / "manually opt-out" action inside the drawer (currently read-only).
 - Meta-validation: visualize the sealed-vs-running delta as a small chart (currently a panel with numbers + progress bar).
 - Consider a batch-comparison view (compare 2+ sealed batches' incremental recovery).
+
+---
+Task ID: 2 (webDevReview round 2)
+Agent: webDevReview (cron job 361690)
+Task: Assess project status, QA via agent-browser, fix bugs, then add features + styling polish.
+
+Work Log:
+- Read worklog.md (Tasks 0 + 1). Project had 14 API routes, 3 pillars working, LLM fuzzy classify, debtor drill-down, quiet-hours clock, seal batch action.
+- QA: Started dev server (unstable in sandbox — gets killed after compile bursts, confirmed from Task 1 worklog). Verified SSR returns 200 with all features present in HTML (Batch Comparison, Audit Timeline, Recovery Trend, Meta-validation, Debtor Registry, Stop-Rule Simulator, Quiet hours, Seal batch, Escalation Ladder). No error markers in SSR HTML.
+- Found React duplicate-key console warning. Investigated extensively: checked all list `key=` props (all use unique .id/.phrase/.level/.key values), checked all API responses for duplicate IDs (none found). Root cause: (1) stale browser console buffer from previous page loads (the browser had been open across multiple re-seeds + server restarts, accumulating old warnings); (2) the unused Radix `<Toaster />` component in layout.tsx (all notifications use `sonner`, not Radix `useToast` — no component imports `useToast` except the Toaster itself). FIXED: removed the dead Radix `<Toaster />` from layout.tsx, closed all browser sessions to clear stale console buffer. Verified: fresh browser session after fix shows ZERO console errors/warnings.
+- Added 3 new features + 2 new API routes:
+
+  1. Batch comparison view (Pillar 1 enhancement):
+     - New endpoint GET /api/batch-comparison — compares incremental recovery (treated vs holdout mean, mean CI, lift %, total recovered) across ALL batches. Returns per-batch: batchName, status, mandateLevel, holdoutRatio, debtorCount, treatedN, holdoutN, treatedMean, holdoutMean, treatedCI, holdoutCI, incrementalRupees, liftPct, totalRecovered, closedAt.
+     - New component BatchComparisonChart (batch-comparison-chart.tsx): recharts BarChart with two bars per batch (treated mean + holdout mean), custom tooltip showing full breakdown (treated/holdout mean, incremental, lift %), angled X-axis labels. Wired as a full-width section alongside the audit timeline.
+     - Verified: returns 3 batches (Q2 ENHANCED sealed, Q3 STANDARD sealed, Q4 STANDARD running). Q2 ENHANCED shows 328% lift (stronger mandate = higher treatment effect).
+
+  2. Recovery trend sparkline (Pillar 1 enhancement):
+     - New endpoint GET /api/recovery-trend?batchId=&days=14 — buckets RecoveryAttempt.amountCollected by IST day (UTC+5:30), returns continuous day series with cumulativeRecovered, dailyRecovered, attempts per day. Fills gaps with 0.
+     - New component RecoveryTrendCard (recovery-trend-card.tsx): recharts AreaChart sparkline showing 14-day cumulative recovery trend, with 3 stat tiles below (14-day total, peak day, total attempts). Custom tooltip with day/cumulative/daily/attempts. Placed side-by-side with the MetaValidationPanel in the Pillar 1 section.
+
+  3. Audit timeline panel (compliance evidence):
+     - New component AuditTimeline (audit-timeline.tsx): uses existing /api/audit endpoint. Groups events by IST day with sticky date headers, renders a vertical timeline with color-coded action icons (BATCH_STARTED=Cpu/gray, BATCH_SEALED=Lock/amber, ESCALATION_APPROVED=ShieldCheck/emerald, ESCALATION_REJECTED=XCircle/rose, STOP_RULE_TRIGGERED=ShieldAlert/rose). Each event row shows action label, timestamp, detail, actor (with Cpu/User icon distinguishing system vs human). Scrollable (max-h-96, scroll-thin). Framer Motion staggered entrance.
+     - Fixed Tailwind dynamic class issue: replaced `${meta.tone.replace("text-","bg-")}` (not visible to JIT) with a static `dot` property in the ACTION_META map (e.g. `dot: "bg-emerald-500"`).
+
+- Enhanced seed script (prisma/seed.ts):
+  - Added Batch 3: Q2-2024-NPL-Cohort-C, SEALED, ENHANCED mandate, 25% holdout, 50 debtors, started 135 days ago, closed 105 days ago. Treatment effect ~51% vs 14% holdout (stronger mandate = higher lift, useful for batch comparison contrast).
+  - Replaced the 4-line audit event block with 12 timestamped audit events spread across 135 days (3 batches × 4 events each: BATCH_STARTED, ESCALATION_APPROVED/REJECTED, STOP_RULE_TRIGGERED, BATCH_SEALED). Each event has a realistic detail string and `at` timestamp. This makes the audit timeline look realistic with multiple date groups.
+  - Re-seeded successfully: 3 batches (1 RUNNING + 2 SEALED), 150 debtors total, 12 audit events.
+
+- Extended dashboard-types.ts with BatchComparisonRow, RecoveryTrendPoint, RecoveryTrendResponse, AuditTimelineGroup. Extended queries.ts with useBatchComparison, useRecoveryTrend (+ invalidated "batch-comparison" in useSealBatch).
+
+- Styling/layout changes:
+  - Restructured Pillar 1 section: MetaValidationPanel + RecoveryTrendCard now side-by-side in a 2-col grid (was MetaValidationPanel alone).
+  - Added full-width section below debtor drill-down: BatchComparisonChart + AuditTimeline side-by-side in a 2-col grid.
+  - Removed unused Radix Toaster from layout.tsx (dead code — all notifications use sonner).
+  - Fixed batch-comparison-chart: removed incorrectly-placed Cell mapping (was outside Bars), kept two distinct-color Bars.
+
+Verification results:
+- bun run lint: clean (no errors/warnings).
+- SSR: GET / returns http=200, 64KB HTML, title "SealedRecovery — Compliant Collections Ops". All features present in SSR HTML (Batch Comparison, Audit Timeline, Recovery Trend, Meta-validation, Debtor Registry, Stop-Rule Simulator, Quiet hours, Seal batch, Escalation Ladder).
+- Console: after closing all browser sessions (clearing stale buffer) + fresh load, ZERO console errors/warnings. The duplicate-key warning that appeared in previous sessions was confirmed to be stale buffer + the removed Radix Toaster.
+- API verification via curl: /api/batch-comparison returns 3 batches with full stats; /api/recovery-trend returns 14-day series with cumulative/daily/attempts. /api/audit returns 12 timestamped events.
+- agent-browser snapshot confirms all new features render: Batch Comparison, Audit Timeline, Recovery Trend all visible with real data.
+- dev.log: no error/unhandled/fail lines.
+
+Stage Summary:
+- Phase-3 features complete: batch comparison chart (cross-batch incremental recovery benchmarking), recovery trend sparkline (14-day cumulative), audit timeline panel (date-grouped compliance evidence), 3rd sealed batch in seed (ENHANCED mandate for comparison contrast), richer timestamped audit events.
+- 2 new API routes added (total now 16). 3 new dashboard components added (batch-comparison-chart, recovery-trend-card, audit-timeline). Seed enhanced with 3rd batch + 12 timestamped audit events.
+- Fixed: React duplicate-key warning resolved (removed dead Radix Toaster + stale browser console buffer). Tailwind dynamic class fixed in audit-timeline (static dot property).
+- Lint clean. All endpoints verified. Page renders 200 with zero console errors.
+
+Unresolved issues / risks / next-phase priorities:
+- Environment dev-server instability persists (memory pressure kills Turbopack after compile bursts). Not a code issue — the auto-runner should handle restarts.
+- NextAuth RBAC: human-approval gate and seal action still stamp "operator@console". Next phase: add NextAuth with agent roles.
+- Socket.io live push: stop-events feed, gate queue, and audit timeline still poll via TanStack Query. Next phase: add a socket.io mini-service for real-time updates.
+- ASR integration: wire z-ai ASR skill to transcribe live call audio, then pipe through detectStopPhrase + LLM classify.
+- Debtor drill-down: add write actions (record new attempt, manually opt-out) inside the drawer.
+- Batch comparison: add a delta/lift scatter plot (incremental rupees vs lift %, bubble size = debtor count).
+- Consider a "methodology pre-registration" view showing the sealed holdout ratio + analysis plan locked at batch start.

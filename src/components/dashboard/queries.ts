@@ -21,6 +21,7 @@ import type {
   DebtorDetail,
   QuietHoursStatus,
   SealBatchResponse,
+  BatchComparisonRow,
 } from "@/lib/dashboard-types";
 
 async function jfetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -224,6 +225,27 @@ export function useSealBatch() {
       qc.invalidateQueries({ queryKey: ["overview"] });
       qc.invalidateQueries({ queryKey: ["batches"] });
       qc.invalidateQueries({ queryKey: ["audit"] });
+      qc.invalidateQueries({ queryKey: ["batch-comparison"] });
     },
+  });
+}
+
+// ---- Phase-3: batch comparison, recovery trend ----
+
+export function useBatchComparison() {
+  return useQuery<BatchComparisonRow[]>({
+    queryKey: ["batch-comparison"],
+    queryFn: () => jfetch<BatchComparisonRow[]>(`/api/batch-comparison`),
+  });
+}
+
+export function useRecoveryTrend(batchId?: string, days = 14) {
+  return useQuery({
+    queryKey: ["recovery-trend", batchId, days],
+    enabled: !!batchId,
+    queryFn: () =>
+      jfetch<{ points: { day: string; cumulativeRecovered: number; dailyRecovered: number; attempts: number }[]; batchName: string }>(
+        `/api/recovery-trend?batchId=${encodeURIComponent(batchId!)}&days=${days}`,
+      ),
   });
 }

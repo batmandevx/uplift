@@ -225,3 +225,42 @@ export interface SealBatchResponse {
     incrementalRupees: number;
   };
 }
+
+// ---- Phase-3 additions (batch comparison, recovery trend, audit timeline) ----
+
+export interface BatchComparisonRow {
+  batchId: string;
+  batchName: string;
+  status: BatchStatus;
+  mandateLevel: string;
+  holdoutRatio: number;
+  debtorCount: number;
+  treatedN: number;
+  holdoutN: number;
+  treatedMean: number;
+  holdoutMean: number;
+  treatedCI: [number, number];
+  holdoutCI: [number, number];
+  incrementalRupees: number;
+  liftPct: number;
+  totalRecovered: number;
+  closedAt?: string | null;
+}
+
+export interface RecoveryTrendPoint {
+  day: string; // ISO date (yyyy-mm-dd)
+  cumulativeRecovered: number;
+  dailyRecovered: number;
+  attempts: number;
+}
+
+export interface RecoveryTrendResponse {
+  points: RecoveryTrendPoint[];
+  batchName: string;
+}
+
+export interface AuditTimelineGroup {
+  date: string; // yyyy-mm-dd
+  label: string; // e.g. "12 Sep"
+  events: AuditEvent[];
+}

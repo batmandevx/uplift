@@ -193,19 +193,68 @@ async function main() {
     sealedRecovered.push({ isHoldout, recovered, outstanding })
   }
 
-  // Audit events
+  // --- Batch 3: older sealed batch (different mandate, for batch comparison) ---
+  const batch3 = await db.recoveryBatch.create({
+    data: {
+      name: 'Q2-2024-NPL-Cohort-C',
+      region: 'IN',
+      mandateLevel: 'ENHANCED',
+      holdoutRatio: 0.25,
+      status: 'SEALED',
+      startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 135),
+      closedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 105),
+    },
+  })
+  for (let i = 0; i < 50; i++) {
+    const r = rand(i + 6000)
+    const isHoldout = r < batch3.holdoutRatio
+    const outstanding = 5000 + Math.floor(rand(i + 6100) * 95000)
+    const baseRate = isHoldout ? 0.14 : 0.51
+    const recovered = Math.floor(outstanding * baseRate * (0.7 + rand(i + 6200) * 0.6))
+    await db.debtor.create({
+      data: {
+        batchId: batch3.id,
+        token: maskToken(i + 2000),
+        region: REGIONS[i % REGIONS.length],
+        preferredLanguage: LANGS[(i + 1) % LANGS.length],
+        outstandingAmount: outstanding,
+        recoveredAmount: recovered,
+        isHoldout,
+        optOut: rand(i + 6300) < 0.08,
+        attemptCountTotal: Math.floor(rand(i + 6400) * 6),
+      },
+    })
+  }
+
+  // --- Audit events (spread across time for the timeline) ---
+  const auditBase = [
+    { batchId: batch3.id, actor: 'system', action: 'BATCH_STARTED', detail: 'Pre-registered holdout ratio 0.25 sealed. Mandate: ENHANCED.', daysAgo: 135 },
+    { batchId: batch3.id, actor: 'agent.priya', action: 'ESCALATION_APPROVED', detail: 'Rung 2 → 3 for DBT-2003 (Legal Referral).', daysAgo: 120 },
+    { batchId: batch3.id, actor: 'system', action: 'STOP_RULE_TRIGGERED', detail: 'Hinglish stop phrase "calls band karo" detected; outreach halted.', daysAgo: 110 },
+    { batchId: batch3.id, actor: 'operator@console', action: 'BATCH_SEALED', detail: 'Ground truth locked. Incremental recovery: ₹8.92L across 38 treated.', daysAgo: 105 },
+    { batchId: batch2.id, actor: 'system', action: 'BATCH_STARTED', detail: 'Pre-registered holdout ratio 0.20 sealed.', daysAgo: 75 },
+    { batchId: batch2.id, actor: 'agent.ravi', action: 'ESCALATION_APPROVED', detail: 'Rung 1 → 2 for DBT-100A.', daysAgo: 60 },
+    { batchId: batch2.id, actor: 'system', action: 'STOP_RULE_TRIGGERED', detail: 'Hinglish stop phrase "mujhe call mat karo" detected; outreach halted.', daysAgo: 50 },
+    { batchId: batch2.id, actor: 'operator@console', action: 'BATCH_SEALED', detail: 'Ground truth amounts locked for meta-validation.', daysAgo: 45 },
+    { batchId: batch1.id, actor: 'system', action: 'BATCH_STARTED', detail: 'Pre-registered holdout ratio 0.20 sealed. Methodology pre-registered.', daysAgo: 14 },
+    { batchId: batch1.id, actor: 'agent.ravi', action: 'ESCALATION_APPROVED', detail: 'Rung 1 → 2 for DBT-001G.', daysAgo: 7 },
+    { batchId: batch1.id, actor: 'system', action: 'STOP_RULE_TRIGGERED', detail: 'Hinglish stop phrase "ab phone mat karna" detected; outreach halted.', daysAgo: 3 },
+    { batchId: batch1.id, actor: 'agent.priya', action: 'ESCALATION_REJECTED', detail: 'Rung 2 → 3 rejected for DBT-0013 (insufficient mandate).', daysAgo: 1 },
+  ]
   await db.auditEvent.createMany({
-    data: [
-      { batchId: batch1.id, actor: 'system', action: 'BATCH_STARTED', detail: 'Pre-registered holdout ratio 0.20 sealed.' },
-      { batchId: batch1.id, actor: 'agent.ravi', action: 'ESCALATION_APPROVED', detail: 'Rung 1 → 2 for DBT-7F3A' },
-      { batchId: batch1.id, actor: 'system', action: 'STOP_RULE_TRIGGERED', detail: 'Hinglish stop phrase detected; outreach halted.' },
-      { batchId: batch2.id, actor: 'system', action: 'BATCH_SEALED', detail: 'Ground truth amounts locked for meta-validation.' },
-    ],
+    data: auditBase.map((a) => ({
+      batchId: a.batchId,
+      actor: a.actor,
+      action: a.action,
+      detail: a.detail,
+      at: new Date(Date.now() - a.daysAgo * 1000 * 60 * 60 * 24),
+    })),
   })
 
   console.log('Seed complete.')
-  console.log(`  Batch 1 (${batch1.id}): ${allDebtors.length} debtors, ${allDebtors.filter(d => d.isHoldout).length} holdout`)
+  console.log(`  Batch 1 (${batch1.id}): ${allDebtors.length} debtors, ${allDebtors.filter(d => d.isHoldout).length} holdout — RUNNING`)
   console.log(`  Batch 2 (${batch2.id}): ${sealedRecovered.length} sealed debtors`)
+  console.log(`  Batch 3 (${batch3.id}): 50 sealed debtors (ENHANCED mandate)`)
 }
 
 main()
